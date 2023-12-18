@@ -158,8 +158,7 @@ now we check the data type object for showing the frequency of top elemans in ea
 # in this code we can select which column would you like to use in your palet 
 
 # Specify the columns you want to include in the analysis
-selected_columns = ['age', 'sex', 'cp', 'trestbps', 'chol', 'fbs', 'restecg', 'thalach',
-       'exang', 'oldpeak', 'slope', 'ca', 'thal', 'target']
+selected_columns = ['age', 'sex', 'cp', 'trestbps', 'chol', 'fbs', 'restecg', 'thalach','exang', 'oldpeak', 'slope', 'ca', 'thal', 'target']
 
 # Create a DataFrame containing only the selected columns
 selected_df = df[selected_columns]
@@ -202,8 +201,19 @@ df2['fbs'] = df2['fbs'].astype(int)
 ```
 
 ```{python}
+"""Ordinal Encoding for fbs: 1:yes, 0:no,"""
+#using Map Function
+df2 = df.copy()
+
+# Ordinal Encoding for target: 1 for 'yes', 0 for 'no'
+ordinal_map = {'Yes': 1, 'No': 0}
+df2['target'] = df2['target'].map(ordinal_map)
+df2['target'] = df2['target'].astype(int)
+
+``` 
+```{python}
 df2.info()
-#G1Math_df.head()
+#df2.head()
 df2.shape
 ```
 
@@ -251,7 +261,11 @@ intdf2.columns
 
 we find the outliers and the Q1 , Q3 and compaire it with data and count how much of each independent variable out of this range and recognize and virtualized it . 
 
+
 **age**
+
+box plots, are a great chart to use when showing the distribution of data points,
+As the plot shows, in this dataset, nearly 50% of the samples are in the age range of 48 to 61.
 ```{python}
 plt.figure(figsize=(10,3))
 plt.subplot(121)
@@ -298,29 +312,29 @@ For each continuous variable, I use boxplot and histogram for visualization. The
  
 
  ```{python}
- float_df = df.select_dtypes(include='float')
-float_df.columns
+ float_df2 = df2.select_dtypes(include='float')
+float_df2.columns
  ```
 
 
-***'oldpeak ***
+***'cp ***
 ```{python}
 plt.figure(figsize=(10,3))
 plt.subplot(121)
-plt.hist(np.array(df['Exercise Hours Per Week']) , density=True , bins=50, edgecolor='black' ,facecolor='pink', alpha=0.75)
+plt.hist(np.array(df2['cp']) , density=True , bins=50, edgecolor='black' ,facecolor='pink', alpha=0.75)
 plt.xlabel('Value', fontsize= 10)
 plt.ylabel('Frequency', fontsize= 10)
 plt.subplot(122)
-sns.boxplot(y ='Exercise Hours Per Week', data=df,palette="Blues")
-plt.xlabel('Exercise Hours Per Week')
+sns.boxplot(y ='cp', data=df,palette="Blues")
+plt.xlabel('cp')
 plt.show()
 ```
 
 
 ```{python}
 #calculate IQR and show thw outliers
-Q1 = df['Exercise Hours Per Week'].quantile(0.25)
-Q3 = df['Exercise Hours Per Week'].quantile(0.75)
+Q1 = df2['cp'].quantile(0.25)
+Q3 = df2['cp'].quantile(0.75)
 print("Q1:",Q1)
 print("Q3:",Q3)
 IQR = Q3 - Q1
@@ -329,37 +343,38 @@ Out1=Q1 - 1.5 * IQR
 print("Out1:",Out1)
 Out2=Q3 + 1.5 * IQR
 print("Out2:",Out2)
-Out1=df['Exercise Hours Per Week'] < Q1 - 1.5 * IQR
-outliers_SleepHoursPerDay  = (df['Exercise Hours Per Week'] < Q1 - 1.5 * IQR) | (df['Exercise Hours Per Week'] > Q3 + 1.5 * IQR)
+Out1=df2['cp'] < Q1 - 1.5 * IQR
+outliers_cp  = (df2['cp'] < Q1 - 1.5 * IQR) | (df['cp'] > Q3 + 1.5 * IQR)
 # Filter the DataFrame to get the actual outlier values
-outliers_ExerciseHoursPerWeek  = df.loc[outliers_SleepHoursPerDay, 'Exercise Hours Per Week']
+outliers_cp  = df.loc[outliers_cp, 'cp']
 # Display the outlier values
-print("Exercise Hours Per Week :",outliers_ExerciseHoursPerWeek)
+print("cp :",outliers_cp)
 ```
 ```{python}
 # check the columns we can see outliers
-dis = df.loc[df['Sleep Hours Per Day']>30.15]
+dis = df2.loc[df2['cp']>5]
 dis.shape
 ```
 
-***Sedentary Hours Per Day ***
+
+***oldpeak ***
 ```{python}
 plt.figure(figsize=(10,3))
 plt.subplot(121)
-plt.hist(np.array(df['Sedentary Hours Per Day']) , density=True , bins=50, edgecolor='black' ,facecolor='pink', alpha=0.75)
+plt.hist(np.array(df2['oldpeak']) , density=True , bins=50, edgecolor='black' ,facecolor='pink', alpha=0.75)
 plt.xlabel('Value', fontsize= 10)
 plt.ylabel('Frequency', fontsize= 10)
 plt.subplot(122)
-sns.boxplot(y ='Sedentary Hours Per Day', data=df,palette="Blues")
-plt.xlabel('Sedentary Hours Per Day')
+sns.boxplot(y ='oldpeak', data=df2,palette="Blues")
+plt.xlabel('oldpeak')
 plt.show()
 ```
 
 
 ```{python}
 #calculate IQR and show thw outliers
-Q1 = df['Sedentary Hours Per Day'].quantile(0.25)
-Q3 = df['Sedentary Hours Per Day'].quantile(0.75)
+Q1 = df2['oldpeak'].quantile(0.25)
+Q3 = df2['oldpeak'].quantile(0.75)
 print("Q1:",Q1)
 print("Q3:",Q3)
 IQR = Q3 - Q1
@@ -368,173 +383,20 @@ Out1=Q1 - 1.5 * IQR
 print("Out1:",Out1)
 Out2=Q3 + 1.5 * IQR
 print("Out2:",Out2)
-outliers_SedentaryHoursPerDay  = (df['Sedentary Hours Per Day'] < Q1 - 1.5 * IQR) | (df['Sedentary Hours Per Day'] > Q3 + 1.5 * IQR)
+Out1=df2['oldpeak'] < Q1 - 1.5 * IQR
+outliers_oldpeak  = (df2['oldpeak'] < Q1 - 1.5 * IQR) | (df2['oldpeak'] > Q3 + 1.5 * IQR)
 # Filter the DataFrame to get the actual outlier values
-outliers_SedentaryHoursPerDay  = df.loc[outliers_SedentaryHoursPerDay, 'Sedentary Hours Per Day']
+outliers_oldpeak  = df2.loc[outliers_oldpeak, 'cp']
 # Display the outlier values
-print("Sedentary Hours Per Day :",outliers_SedentaryHoursPerDay)
+print("oldpeak :",outliers_oldpeak)
 ```
 ```{python}
 # check the columns we can see outliers
-dis = df.loc[df['Sedentary Hours Per Day']>18.04]
+dis = df2.loc[df2['oldpeak']>4.5]
 dis.shape
 ```
 
 
-***BMI ***
-```{python}
-plt.figure(figsize=(10,3))
-plt.subplot(121)
-plt.hist(np.array(df['BMI']) , density=True , bins=50, edgecolor='black' ,facecolor='pink', alpha=0.75)
-plt.xlabel('Value', fontsize= 10)
-plt.ylabel('Frequency', fontsize= 10)
-plt.subplot(122)
-sns.boxplot(y ='BMI', data=df,palette="Blues")
-plt.xlabel('BMI')
-plt.show()
-```
-
-
-```{python}
-#calculate IQR and show thw outliers
-Q1 = df['BMI'].quantile(0.25)
-Q3 = df['BMI'].quantile(0.75)
-print("Q1:",Q1)
-print("Q3:",Q3)
-IQR = Q3 - Q1
-print("IQR:",IQR)
-Out1=Q1 - 1.5 * IQR
-print("Out1:",Out1)
-Out2=Q3 + 1.5 * IQR
-print("Out2:",Out2)
-outliers_BMI  = (df['BMI'] < Q1 - 1.5 * IQR) | (df['BMI'] > Q3 + 1.5 * IQR)
-# Filter the DataFrame to get the actual outlier values
-outliers_BMI  = df.loc[outliers_BMI, 'BMI']
-# Display the outlier values
-print("BMI :", outliers_BMI)
-```
-```{python}
-# check the columns we can see outliers
-dis = df.loc[df['BMI']>50.67]
-dis.shape
-```
-
-----------------------------------------------------
-Chlostrol and age are not float but I check it 
-***Cholesterol ***
-```{python}
-plt.figure(figsize=(10,3))
-plt.subplot(121)
-plt.hist(np.array(df['Cholesterol']) , density=True , bins=50, edgecolor='black' ,facecolor='pink', alpha=0.75)
-plt.xlabel('Value', fontsize= 10)
-plt.ylabel('Frequency', fontsize= 10)
-plt.subplot(122)
-sns.boxplot(y ='Cholesterol', data=df,palette="Blues")
-plt.xlabel('Cholesterol')
-plt.show()
-```
-
-
-```{python}
-#calculate IQR and show thw outliers
-Q1 = df['Cholesterol'].quantile(0.25)
-Q3 = df['Cholesterol'].quantile(0.75)
-print("Q1:",Q1)
-print("Q3:",Q3)
-IQR = Q3 - Q1
-print("IQR:",IQR)
-Out1=Q1 - 1.5 * IQR
-print("Out1:",Out1)
-Out2=Q3 + 1.5 * IQR
-print("Out2:",Out2)
-outliers_Cholesterol = (df['Cholesterol'] < Q1 - 1.5 * IQR) | (df['Cholesterol'] > Q3 + 1.5 * IQR)
-# Filter the DataFrame to get the actual outlier values
-outliers_Cholesterol  = df.loc[outliers_Cholesterol, 'Cholesterol']
-# Display the outlier values
-print("Cholesterol :", outliers_Cholesterol)
-```
-```{python}
-# check the columns we can see outliers
-dis = df.loc[df['Cholesterol']>537]
-dis.shape
-```
-
-***Age ***
-```{python}
-plt.figure(figsize=(10,3))
-plt.subplot(121)
-plt.hist(np.array(df['Age']) , density=True , bins=50, edgecolor='black' ,facecolor='pink', alpha=0.75)
-plt.xlabel('Value', fontsize= 10)
-plt.ylabel('Frequency', fontsize= 10)
-plt.subplot(122)
-sns.boxplot(y ='Age', data=df,palette="Blues")
-plt.xlabel('Age')
-plt.show()
-```
-
-
-```{python}
-#calculate IQR and show thw outliers
-Q1 = df['Age'].quantile(0.25)
-Q3 = df['Age'].quantile(0.75)
-print("Q1:",Q1)
-print("Q3:",Q3)
-IQR = Q3 - Q1
-print("IQR:",IQR)
-Out1=Q1 - 1.5 * IQR
-print("Out1:",Out1)
-Out2=Q3 + 1.5 * IQR
-print("Out2:",Out2)
-outliers_Age  = (df['Age'] < Q1 - 1.5 * IQR) | (df['Cholesterol'] > Q3 + 1.5 * IQR)
-# Filter the DataFrame to get the actual outlier values
-outliers_Age  = df.loc[outliers_Age, 'Age']
-# Display the outlier values
-print("Age :", outliers_Age)
-```
-```{python}
-# check the columns we can see outliers
-dis = df.loc[df['Age']>127]
-dis.shape
-```
-
-
-***Exercise Hours Per Week***
-```{python}
-plt.figure(figsize=(10,3))
-plt.subplot(121)
-plt.hist(np.array(df['Exercise Hours Per Week']) , density=True , bins=50, edgecolor='black' ,facecolor='pink', alpha=0.75)
-plt.xlabel('Value', fontsize= 10)
-plt.ylabel('Frequency', fontsize= 10)
-plt.subplot(122)
-sns.boxplot(y ='Exercise Hours Per Week', data=df,palette="Blues")
-plt.xlabel('Exercise Hours Per Week')
-plt.show()
-```
-
-
-```{python}
-#calculate IQR and show thw outliers
-Q1 = df['Exercise Hours Per Week'].quantile(0.25)
-Q3 = df['Exercise Hours Per Week'].quantile(0.75)
-print("Q1:",Q1)
-print("Q3:",Q3)
-IQR = Q3 - Q1
-print("IQR:",IQR)
-Out1=Q1 - 1.5 * IQR
-print("Out1:",Out1)
-Out2=Q3 + 1.5 * IQR
-print("Out2:",Out2)
-outliers_Age  = (df['Exercise Hours Per Week'] < Q1 - 1.5 * IQR) | (df['Cholesterol'] > Q3 + 1.5 * IQR)
-# Filter the DataFrame to get the actual outlier values
-outliers_Age  = df.loc[outliers_Age, 'Exercise Hours Per Week']
-# Display the outlier values
-print("Exercise Hours Per Week :", outliers_Age)
-```
-```{python}
-# check the columns we can see outliers
-dis = df.loc[df['Exercise Hours Per Week']>30.15]
-dis.shape
-```
 
 *** Bar charts for discrete and categorical variables ***
 
@@ -542,133 +404,61 @@ for founding the outliers of  discrete and categorical variables we need to find
 For each discrete variable (including Booleans), I used bar charts highlighting the target variable for each value. 
 
 ```{python}
-int_df = df.select_dtypes(include='integer')
+int_df = df2.select_dtypes(include='integer')
 int_df.columns
 ```
 
-*** Age ***
+*** slope ***
 ```{python}
 plt.figure(figsize=(5,5))
-valuetable = pd.crosstab(df['Age'],df['Heart Attack Risk']) # ,normalize='index'
+valuetable = pd.crosstab(df['sex'],df['target']) # ,normalize='index'
 valuetable.plot.bar(stacked=True)
-plt.title('Age / Heart Attack Risk')
-plt.xlabel('Age')
-plt.ylabel('Heart Attack Risk')
+plt.title('sex / target')
+plt.xlabel('sex')
+plt.ylabel('target')
 ```
 
 ```{python}
-df['Age'].value_counts()
+df['sex'].value_counts()
 ```
 
+,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
 
-*** Diabetes ***
+Dummy variables
+
+If we have categorical variables, we need to change our categorical variables into dummy variables (using get_dummies or OneHotEncoder).
+for finding the corrolation the independent variable should be integer so this step we can check the variables are integer, 
 ```{python}
-plt.figure(figsize=(5,5))
-valuetable = pd.crosstab(df['Diabetes'],df['Heart Attack Risk']) # ,normalize='index'
-valuetable.plot.bar(stacked=True)
-plt.title('Diabetes / Heart Attack Risk')
-plt.xlabel('Diabetes')
-plt.ylabel('Heart Attack Risk')
+intdf = df2.select_dtypes(include='integer')
+intdf.columns
 ```
 
-```{python}
-df['Diabetes'].value_counts()
-```
-
-*** Cholesterol ***
-```{python}
-plt.figure(figsize=(5,5))
-valuetable = pd.crosstab(df['Cholesterol'],df['Heart Attack Risk']) # ,normalize='index'
-valuetable.plot.bar(stacked=True)
-plt.title('Cholesterol / Heart Attack Risk')
-plt.xlabel('Cholesterol')
-plt.ylabel('Heart Attack Risk')
-```
 
 ```{python}
-df['Cholesterol'].value_counts()
+
+# Checking the linear correlation of variables
+df3=df2[[ 
+'age', 'sex', 'cp', 'trestbps', 'chol', 'restecg', 'thalach', 'exang','ca', 'thal','target']]
+corr_matrix = df3.corr()
+corr_matrix['target'].sort_values(ascending = False)
 ```
-
-***BP_Systolic***
-```{python}
-plt.figure(figsize=(5,5))
-valuetable = pd.crosstab(df['BP_Systolic'],df['Heart Attack Risk']) # ,normalize='index'
-valuetable.plot.bar(stacked=True)
-plt.title('BP_Systolic / Heart Attack Risk')
-plt.xlabel('BP_Systolic')
-plt.ylabel('Heart Attack Risk')
-```
-
-```{python}
-df['BP_Systolic'].value_counts()
-```
-
-<!--
-***Exercise Hours Per Week***
-```{python}
-plt.figure(figsize=(5,5))
-valuetable = pd.crosstab(df['Exercise Hours Per Week'],df['Heart Attack Risk']) # ,normalize='index'
-valuetable.plot.bar(stacked=True)
-plt.title('Exercise Hours Per Week / Heart Attack Risk')
-plt.xlabel('Exercise Hours Per Week')
-plt.ylabel('Heart Attack Risk')
-```
-
-```{python}
-df['Exercise Hours Per Week'].value_counts()
-```
-
--->
-
-*** Family History ***
-```{python}
-plt.figure(figsize=(5,5))
-valuetable = pd.crosstab(df['Family History'],df['Heart Attack Risk']) # ,normalize='index'
-valuetable.plot.bar(stacked=True)
-plt.title('Family History / Heart Attack Risk')
-plt.xlabel('Family History')
-plt.ylabel('Family History')
-```
-
-```{python}
-df['Family History'].value_counts()
-```
-
-
 
 
 ### 4.2 Correlation between different features:
 Correlation is the way of understanding the strength of the relationship between 2 variables or features in a dataset. Correlation coefficients determine this strength by indicating a value between [-1,1] where -1 indicates a very strong negative relationship, 0 indicates no relationship and 1 indicates strong positive relationship. Pearson correlation is one of the most widely used correlation method and it indicates the linear relationship between 2 variables. The heatmap of correlation between all variables of the dataset is given bellow:
 ```{python}
 #| label: Get correlation as a table
-df[['Age','Heart Rate', 'Diabetes', 'Family History', 'Smoking', 'Obesity',
-      'Cholesterol','Alcohol Consumption', 'Exercise Hours Per Week',
-     'Previous Heart Problems', 'Medication Use', 'Stress Level',
-       'Sedentary Hours Per Day',  'BMI', 'Triglycerides',
-       'Physical Activity Days Per Week', 'Sleep Hours Per Day','Heart Attack Risk']].corr()
+df3[['age', 'sex', 'cp', 'trestbps', 'chol', 'restecg', 'thalach', 'exang','ca', 'thal', 'target',]].corr()
 ```
 
 ```{python}
 #| label: Get correlation visually
 plt.figure(figsize = (19,10))
-sns.heatmap(df[['Age','Heart Rate', 'Diabetes', 'Family History', 'Smoking', 'Obesity',
-      'Cholesterol','Alcohol Consumption', 'Exercise Hours Per Week',
-     'Previous Heart Problems', 'Medication Use', 'Stress Level',
-       'Sedentary Hours Per Day', 'BMI', 'Triglycerides',
-       'Physical Activity Days Per Week', 'Sleep Hours Per Day','Heart Attack Risk','BP_Systolic','BP_Diastolic']].corr(), cmap="YlGnBu",
+sns.heatmap(df3[['age', 'sex', 'cp', 'trestbps', 'chol', 'restecg', 'thalach', 'exang',
+       'ca', 'thal', 'target']].corr(), cmap="YlGnBu",
             annot=True)
 ```
 
-```{python}
-# Checking the linear correlation of variables
-df2=df[['Age','Heart Rate', 'Diabetes', 'Family History', 'Smoking', 'Obesity',
-      'Cholesterol','Alcohol Consumption', 'Exercise Hours Per Week',
-     'Previous Heart Problems', 'Medication Use', 'Stress Level',
-       'Sedentary Hours Per Day', 'BMI', 'Triglycerides',
-       'Physical Activity Days Per Week', 'Sleep Hours Per Day','Heart Attack Risk','BP_Systolic','BP_Diastolic']]
-corr_matrix = df2.corr()
-corr_matrix['Heart Attack Risk'].sort_values(ascending = False)
-```
 
 **Key Findings**
 
@@ -678,7 +468,8 @@ Alcohol Consumption has no stronger link with Heart Attack Risk because it is  -
 Smoking is not a major cause of Heart Attack= -.0041
 The sorted correlation matrix for the target variable is as follows:
 ```{python}
-print(df.columns)
+print(df3.columns)
+df2.info()
 ```
 
 
@@ -686,30 +477,32 @@ print(df.columns)
 If we have categorical variables, and we want to fit a linear or logistic regression model, we need to change our categorical variables into dummy variables (using get_dummies or OneHotEncoder).
  
 ```{python}
-"""One_hot encoding for 'Sex(Gender)' """
-df = pd.get_dummies(df, columns = ['Sex'])
+"""One_hot encoding for 'slope' """
+df2 = pd.get_dummies(df2, columns = ['slope'])
 ```
 
 ```{python}
 #df.dtypes
-df.info()
+df2.info()
+#df2.columns
 ```
 
 
 ```{python}
 """Converting 'Object' and 'Boolean' Datatype into int"""
-cat_columns = ['Sex_Female','Sex_Male']
-df[cat_columns] = df[cat_columns].astype(int)
+cat_columns = ['slope_High','slope_Low','slope_Moderate']
+df2[cat_columns] = df2[cat_columns].astype(int)
 ```
+
+
+
 ```{python}
 # Checking the linear correlation of variables
-df2=df[['Age','Heart Rate', 'Diabetes', 'Family History', 'Smoking', 'Obesity',
-      'Cholesterol','Alcohol Consumption', 'Exercise Hours Per Week',
-     'Previous Heart Problems', 'Medication Use', 'Stress Level',
-       'Sedentary Hours Per Day', 'BMI', 'Triglycerides',
-       'Physical Activity Days Per Week', 'Sleep Hours Per Day','Heart Attack Risk','Sex_Female','Sex_Male','BP_Systolic','BP_Diastolic']]
+df2=df2[['age', 'sex', 'cp', 'trestbps', 'chol', 'fbs', 'restecg', 'thalach',
+       'exang', 'oldpeak', 'ca', 'thal', 'target', 'slope_High', 'slope_Low',
+       'slope_Moderate']]
 corr_matrix = df2.corr()
-corr_matrix['Heart Attack Risk'].sort_values(ascending = False)
+corr_matrix['target'].sort_values(ascending = False)
 ```
 
 #### 4.3 Hypotheses
