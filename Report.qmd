@@ -1,0 +1,1313 @@
+---
+title: "Heart attack Risk"
+author: 
+  - Nastaran  Mesgari
+  - Sanaz Achik
+  - Fateme Rajaeian
+date: 2023-12-22
+abstract: "Executive Summary.change abstract "
+format: 
+  html:
+    code-fold: true
+    standalone: true
+    embed-resources: true
+    toc: true
+---
+## 1- Introduction
+ We're studying what factors affect the chance of having a heart attack. We want to understand how certain things, like age and lifestyle, relate to the likelihood of a heart attack. Our aim is to improve preventive measures and find indicators for heart health.
+
+The Heart Attack Risk Prediction Dataset serves as a valuable resource for delving into the intricate dynamics of heart health and its predictors. Heart attacks, or myocardial infarctions, continue to be a significant global health issue, necessitating a deeper comprehension of their precursors and potential mitigating factors. This dataset encapsulates a diverse range of attributes including age, cholesterol levels, blood pressure, smoking habits, exercise patterns, dietary preferences, and more, aiming to elucidate the complex interplay of these variables in determining the likelihood of a heart attack. By employing predictive analytics and machine learning on this dataset, researchers and healthcare professionals can work towards proactive strategies for heart disease prevention and management. The dataset stands as a testament to collective efforts to enhance our understanding of cardiovascular health and pave the way for a healthier future.
+
+The data comes from kaggel site, and there are a lot of columns that gathering in the following we explain it. 
+
+Our goal is to uncover insights that can guide public health strategies and personalized healthcare. In the next sections, we'll explain how we process the data and build models to answer our research question and contribute to heart health understanding.
+
+## 2. Data Set
+### 2.1	Heart Attack Data set
+The data set is about Heart Attack.there are 8763 rows and 26 Columns.(dtypes: float64(3), int64(16), object(7))
+## 3. Data Pre-Processing
+
+in this step we import the main libraries that we need 
+```{python}
+#| label: import-libraries
+# importing main libraries
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+import seaborn as sns
+import matplotlib.pyplot as plt
+from scipy.stats import ttest_ind
+import warnings
+from sklearn.feature_selection import VarianceThreshold
+warnings.filterwarnings("ignore")
+```
+
+To use data, we need to import them and read the data. In this case, our data is CSV files, and it is in the folder whose name is data.
+```{python}
+#| label: data-import
+# Import your data here.
+df = pd.read_csv('data\PrimaryDataSet.csv')
+df.head() 
+```
+
+```{python}
+#| label: show how many rows and coloumn in data set 
+df.shape
+```
+
+```{python}
+#| label: Get inforaion
+# getting data on dataset
+df.info()
+```
+
+### 3.1	Data Cleaning
+The steps followed for the data set is given below:
+#### 3.1.1 Dropping unnecessary columns and rows:
+Dropping unnecessary columns and rows is a data preprocessing step that involves removing specific columns or rows from a dataset that are deemed unnecessary for the analysis or modeling task at hand. This process is beneficial for several reasons. Reducing Dimensionality, Improving Computational Efficiency, Enhancing Model Performance, and so on .
+ 
+
+
+#### 3.1.2 Checking for missing values
+In most of the cases, we do not get complete datasets. They either have some values missing from the rows and columns or they do not have standardized values.
+Dropping unnecessary columns and rows is a data preprocessing step that involves removing specific columns or rows from a dataset that are deemed unnecessary for the analysis or modeling task at hand. This process is beneficial for several reasons. Reducing Dimensionality, Improving Computational Efficiency, Enhancing Model Performance, and so on .
+So, before going ahead with the analysis, it is a good idea to check whether the dataset has any missing values.As you can see in the output of the block below, there is no missing value in this dataset
+
+```{python}
+# Drop rows with null values
+df = df.dropna()
+#df.info()
+#df.shape
+```
+
+```{python}
+# Checking for missing values in the entire dataset
+missing_values = df.isnull().sum()
+# Printing the result
+print(missing_values)
+```
+
+
+#### 	3.1.3 Checking for garbage values
+Garbage value is generally a term meaning that the value in a variable doesn't have some sort of planned meaning.
+By checking the statistical information of the data, some variables have negative values, and some have 0 values which are not compatible with the definition (corresponding to the dataset).
+The detail of these values is given in the following tables:
+ *** Negative Values and Ziro for deleting ***
+ by this code we can check the data for minus and zero if it is not compatible by the meaning they have.
+ ```{python}
+ # get name the columns
+ df.columns
+ ```
+```{python}
+# Checking the negative values of age
+#df[df['age']<0]['age'].value_counts()
+df['age'].value_counts()
+```
+```{python}
+# Checking the negative values of Sex
+
+df['sex'].value_counts()
+```
+
+```{python}
+# Checking the 0 values of fare_amount
+df[df['age']==0]['age'].value_counts()
+```
+
+
+we checked the data , and there are any value of minus and zero so the rows not be changed . 
+
+
+#### 	3.1.4 Checking the distribution of each variable 
+Checking the distribution of each variable involves examining the spread and pattern of values within individual columns or features in a dataset. Understanding the distribution helps you gain insights into the central tendencies, variability, and shape of the data. This is crucial for making informed decisions during data analysis and modeling. Common statistical measures used to describe the distribution include mean, median, and standard deviation.
+
+In this phase, first we checked the numeric variables with zero variance (threshold = 0), *they do not have any contribution on the model*.at this data we do not have any standard deviation equal to zero. so this step we didnt drop anything.
+
+```{python}
+# check the distribution for each column
+df.describe().T
+```
+
+```{python}
+df_numeric = df.select_dtypes(include=np.number)
+df_numeric.shape
+```
+
+```{python}
+
+# finding zero variance variables
+selector_vr= VarianceThreshold(threshold=0)
+selector_vr.fit_transform(df_numeric)
+selector_vr.get_support(indices=True)
+```
+
+check the standard deviation if there are value near the zero , we can delete it . 
+
+```{python}
+#
+df.head()
+df.columns
+```
+
+now we check the data type object for showing the frequency of top elemans in each feature.
+
+
+
+```{python}
+
+# in this code we can select which column would you like to use in your palet 
+
+# Specify the columns you want to include in the analysis
+selected_columns = ['age', 'sex', 'cp', 'trestbps', 'chol', 'fbs', 'restecg', 'thalach',
+       'exang', 'oldpeak', 'slope', 'ca', 'thal', 'target']
+
+# Create a DataFrame containing only the selected columns
+selected_df = df[selected_columns]
+
+# Plot histograms for each variable
+selected_df.hist(figsize=(10, 8))
+plt.suptitle('Histograms of Selected Variables', y=0.95)
+plt.show()
+
+
+```
+```{python}
+# Displaying some statistics about categorical data
+df.describe(include='object')
+```
+
+### 3.2 Data Transformation
+
+#### 3.2.1 Transforming the categorical variables
+
+If we have a column that is object for example yes or no question or if we have Boolean, we can convert them to integer.in this stage I created the new column. 
+in this step we change type of ‘fbs’ from object to integer for using the model.
+Encoding for fbs: 1 for 'yes', 0 for 'no'
+I use the new data frame for own data with own selected column for better decision in others steps.
+```{python} 
+df.describe()
+```
+
+
+```{python}
+"""Ordinal Encoding for fbs: 1:yes, 0:no,"""
+#using Map Function
+df2 = df.copy()
+
+# Ordinal Encoding for fbs: 1 for 'yes', 0 for 'no'
+ordinal_map = {'Yes': 1, 'No': 0}
+df2['fbs'] = df2['fbs'].map(ordinal_map)
+df2['fbs'] = df2['fbs'].astype(int)
+
+```
+
+```{python}
+df2.info()
+#G1Math_df.head()
+df2.shape
+```
+
+
+
+```{python}
+#Replace 'column_name' with the actual column name 
+
+# Get unique values in the column
+unique_values = df['target'].unique()
+print(unique_values)
+unique_values = df['slope'].unique()
+# Display unique values to inspect
+print(unique_values)
+
+```
+
+
+#### 3.2.2 Normalization, standardization, scaling
+
+The data normalization process lowers the scale and brings all the data-points on the same scale.
+Normalization: It involves scaling the values of a variable to a specific range, usually between 0 and 1
+Standardization (Z-score normalization): It transforms the data to have a mean of 0 and a standard deviation of 1.
+Scaling: is a general term for any transformation that alters the range of the data.
+I use scaling in the model selection 
+
+## 4 Data Exploration
+
+We put our visualization here.
+
+### 4.1 Finding outliers , dummy variable
+
+the majority of the data. The use of outlier detection methods depends on the type of data and the analysis objective. However, generally, these methods are commonly applied to numerical columns or continuous variables. The reason for this is that the concept of outliers is more definable in continuous variables, and statistical measures such as mean, standard deviation, box plots, can easily be employed for their identification.
+for founding the outliers of discrete and categorical variables we need to find the type of variables are integer or objects. We find the outliers and the Q1, Q3 and compare it with data and count how much of each independent variable out of this range and recognize and virtualize it .
+For each integer variable, I use boxplot and histogram for visualization. The plots are as bellows:
+```{python}
+df2.columns
+```
+
+```{python}
+intdf2 = df2.select_dtypes(include='integer')
+intdf2.columns
+```
+
+
+we find the outliers and the Q1 , Q3 and compaire it with data and count how much of each independent variable out of this range and recognize and virtualized it . 
+
+**age**
+```{python}
+plt.figure(figsize=(10,3))
+plt.subplot(121)
+plt.hist(np.array(df2['age']) , density=True , bins=50, edgecolor='black' ,facecolor='pink', alpha=0.75)
+plt.xlabel('Value', fontsize= 10)
+plt.ylabel('Frequency', fontsize= 10)
+plt.subplot(122)
+sns.boxplot(y ='age', data=df2,palette="Blues")
+plt.xlabel('age')
+plt.show()
+```
+
+```{python}
+#calculate IQR and show thw outliers
+Q1 = df2['age'].quantile(0.25)
+Q3 = df2['age'].quantile(0.75)
+print("Q1:",Q1)
+print("Q3:",Q3)
+IQR = Q3 - Q1
+print("IQR:",IQR)
+Out1=Q1 - 1.5 * IQR
+print("Out1:",Out1)
+Out2=Q3 + 1.5 * IQR
+print("Out2:",Out2)
+outliers_absences_Port = (df2['age'] < Q1 - 1.5 * IQR) | (df2['age'] > Q3 + 1.5 * IQR)
+# Filter the DataFrame to get the actual outlier values
+outliers_absences_Port  = df2.loc[outliers_absences_Port, 'age']
+# Display the outlier values
+#print("df2 :", outliers_absences_Port)
+```
+
+```{python}
+# check the columns we can see outliers
+toll_df = df2.loc[df2['age']>80.5]
+toll_df.shape
+
+```
+
+we find the outliers and the Q1 , Q3 and compaire it with data and count how much of each independent variable out of this range and recognize and virtualized it .
+For each continuous variable, I use boxplot and histogram for visualization. The plots are as bellows:
+ we check the IQR= Q3-Q1 and if the value is greater or less than of 1.5 IQR we can find the outlier and show the shape of them ( rows , columns) if existed .
+
+ for getting data are continuous variable we need found the float variable 
+ 
+
+ ```{python}
+ float_df = df.select_dtypes(include='float')
+float_df.columns
+ ```
+
+
+***'oldpeak ***
+```{python}
+plt.figure(figsize=(10,3))
+plt.subplot(121)
+plt.hist(np.array(df['Exercise Hours Per Week']) , density=True , bins=50, edgecolor='black' ,facecolor='pink', alpha=0.75)
+plt.xlabel('Value', fontsize= 10)
+plt.ylabel('Frequency', fontsize= 10)
+plt.subplot(122)
+sns.boxplot(y ='Exercise Hours Per Week', data=df,palette="Blues")
+plt.xlabel('Exercise Hours Per Week')
+plt.show()
+```
+
+
+```{python}
+#calculate IQR and show thw outliers
+Q1 = df['Exercise Hours Per Week'].quantile(0.25)
+Q3 = df['Exercise Hours Per Week'].quantile(0.75)
+print("Q1:",Q1)
+print("Q3:",Q3)
+IQR = Q3 - Q1
+print("IQR:",IQR)
+Out1=Q1 - 1.5 * IQR
+print("Out1:",Out1)
+Out2=Q3 + 1.5 * IQR
+print("Out2:",Out2)
+Out1=df['Exercise Hours Per Week'] < Q1 - 1.5 * IQR
+outliers_SleepHoursPerDay  = (df['Exercise Hours Per Week'] < Q1 - 1.5 * IQR) | (df['Exercise Hours Per Week'] > Q3 + 1.5 * IQR)
+# Filter the DataFrame to get the actual outlier values
+outliers_ExerciseHoursPerWeek  = df.loc[outliers_SleepHoursPerDay, 'Exercise Hours Per Week']
+# Display the outlier values
+print("Exercise Hours Per Week :",outliers_ExerciseHoursPerWeek)
+```
+```{python}
+# check the columns we can see outliers
+dis = df.loc[df['Sleep Hours Per Day']>30.15]
+dis.shape
+```
+
+***Sedentary Hours Per Day ***
+```{python}
+plt.figure(figsize=(10,3))
+plt.subplot(121)
+plt.hist(np.array(df['Sedentary Hours Per Day']) , density=True , bins=50, edgecolor='black' ,facecolor='pink', alpha=0.75)
+plt.xlabel('Value', fontsize= 10)
+plt.ylabel('Frequency', fontsize= 10)
+plt.subplot(122)
+sns.boxplot(y ='Sedentary Hours Per Day', data=df,palette="Blues")
+plt.xlabel('Sedentary Hours Per Day')
+plt.show()
+```
+
+
+```{python}
+#calculate IQR and show thw outliers
+Q1 = df['Sedentary Hours Per Day'].quantile(0.25)
+Q3 = df['Sedentary Hours Per Day'].quantile(0.75)
+print("Q1:",Q1)
+print("Q3:",Q3)
+IQR = Q3 - Q1
+print("IQR:",IQR)
+Out1=Q1 - 1.5 * IQR
+print("Out1:",Out1)
+Out2=Q3 + 1.5 * IQR
+print("Out2:",Out2)
+outliers_SedentaryHoursPerDay  = (df['Sedentary Hours Per Day'] < Q1 - 1.5 * IQR) | (df['Sedentary Hours Per Day'] > Q3 + 1.5 * IQR)
+# Filter the DataFrame to get the actual outlier values
+outliers_SedentaryHoursPerDay  = df.loc[outliers_SedentaryHoursPerDay, 'Sedentary Hours Per Day']
+# Display the outlier values
+print("Sedentary Hours Per Day :",outliers_SedentaryHoursPerDay)
+```
+```{python}
+# check the columns we can see outliers
+dis = df.loc[df['Sedentary Hours Per Day']>18.04]
+dis.shape
+```
+
+
+***BMI ***
+```{python}
+plt.figure(figsize=(10,3))
+plt.subplot(121)
+plt.hist(np.array(df['BMI']) , density=True , bins=50, edgecolor='black' ,facecolor='pink', alpha=0.75)
+plt.xlabel('Value', fontsize= 10)
+plt.ylabel('Frequency', fontsize= 10)
+plt.subplot(122)
+sns.boxplot(y ='BMI', data=df,palette="Blues")
+plt.xlabel('BMI')
+plt.show()
+```
+
+
+```{python}
+#calculate IQR and show thw outliers
+Q1 = df['BMI'].quantile(0.25)
+Q3 = df['BMI'].quantile(0.75)
+print("Q1:",Q1)
+print("Q3:",Q3)
+IQR = Q3 - Q1
+print("IQR:",IQR)
+Out1=Q1 - 1.5 * IQR
+print("Out1:",Out1)
+Out2=Q3 + 1.5 * IQR
+print("Out2:",Out2)
+outliers_BMI  = (df['BMI'] < Q1 - 1.5 * IQR) | (df['BMI'] > Q3 + 1.5 * IQR)
+# Filter the DataFrame to get the actual outlier values
+outliers_BMI  = df.loc[outliers_BMI, 'BMI']
+# Display the outlier values
+print("BMI :", outliers_BMI)
+```
+```{python}
+# check the columns we can see outliers
+dis = df.loc[df['BMI']>50.67]
+dis.shape
+```
+
+----------------------------------------------------
+Chlostrol and age are not float but I check it 
+***Cholesterol ***
+```{python}
+plt.figure(figsize=(10,3))
+plt.subplot(121)
+plt.hist(np.array(df['Cholesterol']) , density=True , bins=50, edgecolor='black' ,facecolor='pink', alpha=0.75)
+plt.xlabel('Value', fontsize= 10)
+plt.ylabel('Frequency', fontsize= 10)
+plt.subplot(122)
+sns.boxplot(y ='Cholesterol', data=df,palette="Blues")
+plt.xlabel('Cholesterol')
+plt.show()
+```
+
+
+```{python}
+#calculate IQR and show thw outliers
+Q1 = df['Cholesterol'].quantile(0.25)
+Q3 = df['Cholesterol'].quantile(0.75)
+print("Q1:",Q1)
+print("Q3:",Q3)
+IQR = Q3 - Q1
+print("IQR:",IQR)
+Out1=Q1 - 1.5 * IQR
+print("Out1:",Out1)
+Out2=Q3 + 1.5 * IQR
+print("Out2:",Out2)
+outliers_Cholesterol = (df['Cholesterol'] < Q1 - 1.5 * IQR) | (df['Cholesterol'] > Q3 + 1.5 * IQR)
+# Filter the DataFrame to get the actual outlier values
+outliers_Cholesterol  = df.loc[outliers_Cholesterol, 'Cholesterol']
+# Display the outlier values
+print("Cholesterol :", outliers_Cholesterol)
+```
+```{python}
+# check the columns we can see outliers
+dis = df.loc[df['Cholesterol']>537]
+dis.shape
+```
+
+***Age ***
+```{python}
+plt.figure(figsize=(10,3))
+plt.subplot(121)
+plt.hist(np.array(df['Age']) , density=True , bins=50, edgecolor='black' ,facecolor='pink', alpha=0.75)
+plt.xlabel('Value', fontsize= 10)
+plt.ylabel('Frequency', fontsize= 10)
+plt.subplot(122)
+sns.boxplot(y ='Age', data=df,palette="Blues")
+plt.xlabel('Age')
+plt.show()
+```
+
+
+```{python}
+#calculate IQR and show thw outliers
+Q1 = df['Age'].quantile(0.25)
+Q3 = df['Age'].quantile(0.75)
+print("Q1:",Q1)
+print("Q3:",Q3)
+IQR = Q3 - Q1
+print("IQR:",IQR)
+Out1=Q1 - 1.5 * IQR
+print("Out1:",Out1)
+Out2=Q3 + 1.5 * IQR
+print("Out2:",Out2)
+outliers_Age  = (df['Age'] < Q1 - 1.5 * IQR) | (df['Cholesterol'] > Q3 + 1.5 * IQR)
+# Filter the DataFrame to get the actual outlier values
+outliers_Age  = df.loc[outliers_Age, 'Age']
+# Display the outlier values
+print("Age :", outliers_Age)
+```
+```{python}
+# check the columns we can see outliers
+dis = df.loc[df['Age']>127]
+dis.shape
+```
+
+
+***Exercise Hours Per Week***
+```{python}
+plt.figure(figsize=(10,3))
+plt.subplot(121)
+plt.hist(np.array(df['Exercise Hours Per Week']) , density=True , bins=50, edgecolor='black' ,facecolor='pink', alpha=0.75)
+plt.xlabel('Value', fontsize= 10)
+plt.ylabel('Frequency', fontsize= 10)
+plt.subplot(122)
+sns.boxplot(y ='Exercise Hours Per Week', data=df,palette="Blues")
+plt.xlabel('Exercise Hours Per Week')
+plt.show()
+```
+
+
+```{python}
+#calculate IQR and show thw outliers
+Q1 = df['Exercise Hours Per Week'].quantile(0.25)
+Q3 = df['Exercise Hours Per Week'].quantile(0.75)
+print("Q1:",Q1)
+print("Q3:",Q3)
+IQR = Q3 - Q1
+print("IQR:",IQR)
+Out1=Q1 - 1.5 * IQR
+print("Out1:",Out1)
+Out2=Q3 + 1.5 * IQR
+print("Out2:",Out2)
+outliers_Age  = (df['Exercise Hours Per Week'] < Q1 - 1.5 * IQR) | (df['Cholesterol'] > Q3 + 1.5 * IQR)
+# Filter the DataFrame to get the actual outlier values
+outliers_Age  = df.loc[outliers_Age, 'Exercise Hours Per Week']
+# Display the outlier values
+print("Exercise Hours Per Week :", outliers_Age)
+```
+```{python}
+# check the columns we can see outliers
+dis = df.loc[df['Exercise Hours Per Week']>30.15]
+dis.shape
+```
+
+*** Bar charts for discrete and categorical variables ***
+
+for founding the outliers of  discrete and categorical variables we need to find the type of variables are integer or objects . 
+For each discrete variable (including Booleans), I used bar charts highlighting the target variable for each value. 
+
+```{python}
+int_df = df.select_dtypes(include='integer')
+int_df.columns
+```
+
+*** Age ***
+```{python}
+plt.figure(figsize=(5,5))
+valuetable = pd.crosstab(df['Age'],df['Heart Attack Risk']) # ,normalize='index'
+valuetable.plot.bar(stacked=True)
+plt.title('Age / Heart Attack Risk')
+plt.xlabel('Age')
+plt.ylabel('Heart Attack Risk')
+```
+
+```{python}
+df['Age'].value_counts()
+```
+
+
+*** Diabetes ***
+```{python}
+plt.figure(figsize=(5,5))
+valuetable = pd.crosstab(df['Diabetes'],df['Heart Attack Risk']) # ,normalize='index'
+valuetable.plot.bar(stacked=True)
+plt.title('Diabetes / Heart Attack Risk')
+plt.xlabel('Diabetes')
+plt.ylabel('Heart Attack Risk')
+```
+
+```{python}
+df['Diabetes'].value_counts()
+```
+
+*** Cholesterol ***
+```{python}
+plt.figure(figsize=(5,5))
+valuetable = pd.crosstab(df['Cholesterol'],df['Heart Attack Risk']) # ,normalize='index'
+valuetable.plot.bar(stacked=True)
+plt.title('Cholesterol / Heart Attack Risk')
+plt.xlabel('Cholesterol')
+plt.ylabel('Heart Attack Risk')
+```
+
+```{python}
+df['Cholesterol'].value_counts()
+```
+
+***BP_Systolic***
+```{python}
+plt.figure(figsize=(5,5))
+valuetable = pd.crosstab(df['BP_Systolic'],df['Heart Attack Risk']) # ,normalize='index'
+valuetable.plot.bar(stacked=True)
+plt.title('BP_Systolic / Heart Attack Risk')
+plt.xlabel('BP_Systolic')
+plt.ylabel('Heart Attack Risk')
+```
+
+```{python}
+df['BP_Systolic'].value_counts()
+```
+
+<!--
+***Exercise Hours Per Week***
+```{python}
+plt.figure(figsize=(5,5))
+valuetable = pd.crosstab(df['Exercise Hours Per Week'],df['Heart Attack Risk']) # ,normalize='index'
+valuetable.plot.bar(stacked=True)
+plt.title('Exercise Hours Per Week / Heart Attack Risk')
+plt.xlabel('Exercise Hours Per Week')
+plt.ylabel('Heart Attack Risk')
+```
+
+```{python}
+df['Exercise Hours Per Week'].value_counts()
+```
+
+-->
+
+*** Family History ***
+```{python}
+plt.figure(figsize=(5,5))
+valuetable = pd.crosstab(df['Family History'],df['Heart Attack Risk']) # ,normalize='index'
+valuetable.plot.bar(stacked=True)
+plt.title('Family History / Heart Attack Risk')
+plt.xlabel('Family History')
+plt.ylabel('Family History')
+```
+
+```{python}
+df['Family History'].value_counts()
+```
+
+
+
+
+### 4.2 Correlation between different features:
+Correlation is the way of understanding the strength of the relationship between 2 variables or features in a dataset. Correlation coefficients determine this strength by indicating a value between [-1,1] where -1 indicates a very strong negative relationship, 0 indicates no relationship and 1 indicates strong positive relationship. Pearson correlation is one of the most widely used correlation method and it indicates the linear relationship between 2 variables. The heatmap of correlation between all variables of the dataset is given bellow:
+```{python}
+#| label: Get correlation as a table
+df[['Age','Heart Rate', 'Diabetes', 'Family History', 'Smoking', 'Obesity',
+      'Cholesterol','Alcohol Consumption', 'Exercise Hours Per Week',
+     'Previous Heart Problems', 'Medication Use', 'Stress Level',
+       'Sedentary Hours Per Day',  'BMI', 'Triglycerides',
+       'Physical Activity Days Per Week', 'Sleep Hours Per Day','Heart Attack Risk']].corr()
+```
+
+```{python}
+#| label: Get correlation visually
+plt.figure(figsize = (19,10))
+sns.heatmap(df[['Age','Heart Rate', 'Diabetes', 'Family History', 'Smoking', 'Obesity',
+      'Cholesterol','Alcohol Consumption', 'Exercise Hours Per Week',
+     'Previous Heart Problems', 'Medication Use', 'Stress Level',
+       'Sedentary Hours Per Day', 'BMI', 'Triglycerides',
+       'Physical Activity Days Per Week', 'Sleep Hours Per Day','Heart Attack Risk','BP_Systolic','BP_Diastolic']].corr(), cmap="YlGnBu",
+            annot=True)
+```
+
+```{python}
+# Checking the linear correlation of variables
+df2=df[['Age','Heart Rate', 'Diabetes', 'Family History', 'Smoking', 'Obesity',
+      'Cholesterol','Alcohol Consumption', 'Exercise Hours Per Week',
+     'Previous Heart Problems', 'Medication Use', 'Stress Level',
+       'Sedentary Hours Per Day', 'BMI', 'Triglycerides',
+       'Physical Activity Days Per Week', 'Sleep Hours Per Day','Heart Attack Risk','BP_Systolic','BP_Diastolic']]
+corr_matrix = df2.corr()
+corr_matrix['Heart Attack Risk'].sort_values(ascending = False)
+```
+
+**Key Findings**
+
+Heart Attack risk has *highest correlation* with **Diabetes,BP_Systolic, Cholestrol and Exercise Hours Per Weak** because we have greatest number near to 1
+Heart attack Risk is not much dependent on Sedentary Hours Per Day because it is the nearest number to -1 = -.0056
+Alcohol Consumption has no stronger link with Heart Attack Risk because it is  -.014 
+Smoking is not a major cause of Heart Attack= -.0041
+The sorted correlation matrix for the target variable is as follows:
+```{python}
+print(df.columns)
+```
+
+
+#### 4.2.1 Dummy variables
+If we have categorical variables, and we want to fit a linear or logistic regression model, we need to change our categorical variables into dummy variables (using get_dummies or OneHotEncoder).
+ 
+```{python}
+"""One_hot encoding for 'Sex(Gender)' """
+df = pd.get_dummies(df, columns = ['Sex'])
+```
+
+```{python}
+#df.dtypes
+df.info()
+```
+
+
+```{python}
+"""Converting 'Object' and 'Boolean' Datatype into int"""
+cat_columns = ['Sex_Female','Sex_Male']
+df[cat_columns] = df[cat_columns].astype(int)
+```
+```{python}
+# Checking the linear correlation of variables
+df2=df[['Age','Heart Rate', 'Diabetes', 'Family History', 'Smoking', 'Obesity',
+      'Cholesterol','Alcohol Consumption', 'Exercise Hours Per Week',
+     'Previous Heart Problems', 'Medication Use', 'Stress Level',
+       'Sedentary Hours Per Day', 'BMI', 'Triglycerides',
+       'Physical Activity Days Per Week', 'Sleep Hours Per Day','Heart Attack Risk','Sex_Female','Sex_Male','BP_Systolic','BP_Diastolic']]
+corr_matrix = df2.corr()
+corr_matrix['Heart Attack Risk'].sort_values(ascending = False)
+```
+
+#### 4.3 Hypotheses
+we check the data base on relation and the questions 
+
+
+```{python}
+
+# Summary statistics
+summary_stats = df
+print(summary_stats)
+
+# Visualize the distribution of the target variable (assuming binary: 0 for no heart attack, 1 for heart attack)
+sns.countplot(x='Heart Attack Risk', data=df)
+plt.title('Distribution of Heart Attacks')
+plt.show()
+
+# Explore the relationship between age and the presence of heart attacks
+sns.histplot(x='Smoking', hue='Heart Attack Risk', data=df, kde=True)
+plt.title('Distribution of Age for Heart Attacks')
+plt.show()
+```
+
+***Checking the Hypotheses base on Diabetes***
+```{python}
+# Checking the Hypotheses base on Diabetes
+# Formulate Hypotheses
+# Hypothesis 1: There is a significant difference in the Diabetes distribution between patients with and without heart attacks.
+
+# Perform a t-test to test the hypothesis
+Diabetes_heart_attack = df[df['Heart Attack Risk'] == 1]['Diabetes']
+Diabetes_no_heart_attack = df[df['Heart Attack Risk'] == 0]['Diabetes']
+
+t_stat, p_value = ttest_ind(Diabetes_heart_attack, Diabetes_no_heart_attack)
+print(f"T-statistic: {t_stat}, p-value: {p_value}")
+
+# Set significance level
+alpha = 0.5
+
+# Check if the p-value is less than the significance level
+if p_value < alpha:
+    print("Reject the null hypothesis: There is a significant difference in the Diabetes distribution.")
+else:
+    print("Fail to reject the null hypothesis: There is no significant difference in the Diabetes distribution.")
+
+
+```
+
+***Checking the Hypotheses base on Smoking***
+```{python}
+# Checking the Hypotheses base on Smoking
+# Formulate Hypotheses
+# Hypothesis 1: There is a significant difference in the Smoking distribution between patients with and without heart attacks.
+
+# Perform a t-test to test the hypothesis
+Smoking_heart_attack = df[df['Heart Attack Risk'] == 1]['Smoking']
+Smoking_no_heart_attack = df[df['Heart Attack Risk'] == 0]['Smoking']
+
+t_stat, p_value = ttest_ind(Smoking_heart_attack, Smoking_no_heart_attack)
+print(f"T-statistic: {t_stat}, p-value: {p_value}")
+
+# Set significance level
+alpha = 0.5
+
+# Check if the p-value is less than the significance level
+if p_value < alpha:
+    print("Reject the null hypothesis: There is a significant difference in the Smoking distribution.")
+else:
+    print("Fail to reject the null hypothesis: There is no significant difference in the Smoking distribution.")
+
+
+```
+
+***Checking the Hypotheses base on Cholesterol***
+```{python}
+# Checking the Hypotheses base on Cholesterol
+# Formulate Hypotheses
+# Hypothesis 1: There is a significant difference in the Cholesterol distribution between patients with and without heart attacks.
+
+# Perform a t-test to test the hypothesis
+Cholesterol_heart_attack = df[df['Heart Attack Risk'] == 1]['Cholesterol']
+Cholesterol_no_heart_attack = df[df['Heart Attack Risk'] == 0]['Cholesterol']
+
+t_stat, p_value = ttest_ind(Cholesterol_heart_attack, Cholesterol_no_heart_attack)
+print(f"T-statistic: {t_stat}, p-value: {p_value}")
+
+# Set significance level
+alpha = 0.5
+
+# Check if the p-value is less than the significance level
+if p_value < alpha:
+    print("Reject the null hypothesis: There is a significant difference in the Cholesterol distribution.")
+else:
+    print("Fail to reject the null hypothesis: There is no significant difference in the Cholesterol distribution.")
+
+
+```
+
+
+***Checking the Hypotheses base on Age***
+```{python}
+# Checking the Hypotheses base on Smoking
+# Formulate Hypotheses
+# Hypothesis 1: There is a significant difference in the Age distribution between patients with and without heart attacks.
+
+# Perform a t-test to test the hypothesis
+Age_heart_attack = df[df['Heart Attack Risk'] == 1]['Age']
+Age_no_heart_attack = df[df['Heart Attack Risk'] == 0]['Age']
+
+t_stat, p_value = ttest_ind(Age_heart_attack, Age_no_heart_attack)
+print(f"T-statistic: {t_stat}, p-value: {p_value}")
+
+# Set significance level
+alpha = 0.5
+
+# Check if the p-value is less than the significance level
+if p_value < alpha:
+    print("Reject the null hypothesis: There is a significant difference in the Age distribution.")
+else:
+    print("Fail to reject the null hypothesis: There is no significant difference in the Age distribution.")
+
+```
+
+## 5. Data Analysis (Visualization and checking the distribution of each variable)
+### 5.1 Data Modeling
+```{python}
+df['Heart Attack Risk'].unique()
+df['Heart Attack Risk'].value_counts()
+```
+
+Now that the data is clean and the values of our target variable is balanced (0:5624, 1:3139), it is time to choose our classifier. A summary of each algorithm is described below.
+**Logistic Regression** :  is a classification method used when the Response column is categorical with only two possible values. The probability of the possible outcomes is modeled with a logistic transformation as a weighted sum of the Predictor columns. The weights or regression coefficients are selected to maximize the likelihood of the observed data.
+**Linear Discriminant Analysis** or Normal Discriminant Analysis or Discriminant Function Analysis is a dimensionality reduction technique that is commonly used for supervised classification problems. It is used for modelling differences in groups i.e. separating two or more classes. It is used to project the features in higher dimension space into a lower dimension space. Linear discriminant analysis is popular when we have more than two response classes, because it also provides low-dimensional views of the data
+K-Nearest Neighbors algorithm, also known as KNN or k-NN, is a non-parametric algorithm (which means it does not make any assumption on underlying data), supervised learning classifier, which uses proximity to make classifications or predictions about the grouping of an individual data point. a class label is assigned based on a majority vote.
+Decision Tree is a type of supervised machine learning used to categorize or make predictions based on how a previous set of questions were answered. The model is a form of supervised learning, meaning that the model is trained and tested on a set of data that contains the desired categorization. The tree can be explained by two entities, namely decision nodes and leaves.
+Random Forest is a collection (a.k.a. ensemble) of many decision trees. A decision tree is a flow chart which separates data based on some condition. If a condition is true, you move on a path otherwise, you move on to another path.
+At the first step of modeling, I decided to select 22 independent variables to put in the model. The variables are as follows:
+
+```{python}
+X = df[['Age', 'Cholesterol', 'Heart Rate',
+        'Diabetes', 'Family History', 'Smoking', 'Obesity',
+        'Alcohol Consumption', 'Exercise Hours Per Week', 'Diet',
+        'Previous Heart Problems', 'Medication Use', 'Stress Level',
+        'Sedentary Hours Per Day', 'BMI', 'Triglycerides',
+        'Physical Activity Days Per Week', 'Sleep Hours Per Day',
+         'BP_Systolic', 'BP_Diastolic','Sex_Female',
+         'Sex_Male']]
+        
+y=df['Heart Attack Risk'].values
+```
+
+```{python}
+X.head()
+```
+
+```{python}
+print(y[1:10])
+```
+
+### 5.2	Model Selection
+***Checking the impact of *Heart Attack Risk* variable with modeling *** 
+In order to select my classifier, I performed a 10-fold cross validation algorithm on the above-mentioned classification models and calculated the accuracy (average of all 10 folds) of each model. The result of the cross validation is as follows:
+
+
+```{python}
+#| label: cross validation without removing Heart Attack Risk
+from sklearn.linear_model import LogisticRegression
+from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
+from sklearn.tree import DecisionTreeClassifier
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.model_selection import KFold
+from sklearn.model_selection import cross_val_score
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import StandardScaler
+import pandas as pd
+
+
+# Selecting features and target variable
+x = df.drop(['Heart Attack Risk' ], axis=1)
+y = df['Heart Attack Risk']
+
+# Splitting the data into training and testing sets
+xtrain, xtest, ytrain, ytest = train_test_split(x, y, test_size=0.2, random_state=42)
+
+# Scaling the features using StandardScaler
+scaler = StandardScaler()
+xtrain_scaled = scaler.fit_transform(xtrain)
+xtest_scaled = scaler.transform(xtest)
+
+# Defining classification models
+models = [
+    ('LR', LogisticRegression(n_jobs=-1)),
+    ('LDA', LinearDiscriminantAnalysis()),
+    ('KNN', KNeighborsClassifier()),
+    ('DTC', DecisionTreeClassifier()),
+    ('RFM', RandomForestClassifier(n_jobs=-1))
+]
+
+# 10-fold cross-validation
+results = []
+names = []
+
+for name, model in models:
+    kfold = KFold(n_splits=10, shuffle=True, random_state=42)
+    cv_results = cross_val_score(model, xtrain_scaled, ytrain, cv=kfold, scoring='accuracy')
+    results.append(cv_results)
+    names.append(name)
+
+    msg = "%s: %f (%f)" % (name, cv_results.mean(), cv_results.std())
+    print(msg)
+
+```
+
+The results show that all the classification algorithms except Linear Discriminant Analysis and K-Nearest Neighbors have an accuracy of 64%. The result is maybe good, if we have almost all the classifiers giving a perfect result at the first step and without tuning the hyperparameters and feature engineering it is not normal.
+To get the better result we should be surveyed precisely. Our target variable had the strongest linear correlation with variable “Diabetes”,” Cholesterol”,” BP_Systolic”,” Exercise Hours Per Week”. 
+
+
+
+***RFC with Diabetes,Cholesterol,BP_Systolic,'Exercise Hours Per Week'...*** 
+
+```{python}
+# RandomForestC lassifier without removing Diabetes,Cholesterol,BP_Systolic,'Exercise Hours Per Week'  prediction and classification report and score
+x = df.drop(['Heart Attack Risk' ], axis=1)
+y = df['Heart Attack Risk']
+
+xtrain, xtest, ytrain, ytest = train_test_split(x, y, test_size=0.2, random_state=42)
+
+model = RandomForestClassifier(n_estimators=20, n_jobs=-1)
+model.fit(xtrain,ytrain)
+ypred = model.predict(xtest)
+
+from sklearn.metrics import confusion_matrix
+cm = confusion_matrix(ytest, ypred)
+print(cm)
+
+from sklearn.metrics import classification_report
+print(classification_report(ytest, ypred))
+
+score = model.score(xtest, ytest)
+print(score)
+```
+
+RFC with Diabetes,...: accuracy : 62%
+
+```{python}
+# ROC Curve
+from sklearn.metrics import roc_auc_score
+auc = roc_auc_score(ytest, ypred)
+auc
+from sklearn.metrics import roc_curve
+fpr, tpr, thresholds = roc_curve(ytest, ypred)
+fpr
+tpr
+thresholds
+plt.plot([0, 1], [0, 1],'--')
+plt.plot(fpr, tpr, marker='.')
+plt.title('ROC-AUC')
+plt.xlabel('False Positive Rate')
+plt.ylabel('True Positive Rate')
+
+```
+
+```{python}
+auc = roc_auc_score(ytest, model.predict(xtest))
+auc
+```
+
+To check this more precisely, I removed Diabetes, Chlostrol,BP_Systolic,'Exercise Hours Per Week'  from my feature variables and performed a Random Forest Classifier model. I split my data set into train (80% of the observation) and test (20% of the observation), fitted the model on train data and performed a prediction on my test data. The classification report is as follows; the accuracy reduced into 62%.
+
+*** RFC without  'Cholesterol','Heart Attack Risk','Diabetes','BP_Systolic'*** 
+```{python}
+# RandomForestClassifier with removing Diabetes, prediction and classification report and score
+x = df.drop(['Cholesterol','Heart Attack Risk','Diabetes','BP_Systolic','Exercise Hours Per Week' ],axis=1)
+y = df['Heart Attack Risk']
+
+xtrain, xtest, ytrain, ytest = train_test_split(x, y, test_size=0.2, random_state=42)
+
+model = RandomForestClassifier(n_estimators=20, n_jobs=-1)
+model.fit(xtrain,ytrain)
+ypred = model.predict(xtest)
+
+cm = confusion_matrix(ytest, ypred)
+print(cm)
+
+print(classification_report(ytest, ypred))
+
+score = model.score(xtest, ytest)
+print(score)
+```
+
+
+```{python}
+# ROC Curve
+auc = roc_auc_score(ytest, ypred)
+auc
+fpr, tpr, thresholds = roc_curve(ytest, ypred)
+fpr
+tpr
+thresholds
+plt.plot([0, 1], [0, 1],'--')
+plt.plot(fpr, tpr, marker='.')
+plt.title('ROC-AUC')
+plt.xlabel('False Positive Rate')
+plt.ylabel('True Positive Rate')
+```
+
+```{python}
+auc = roc_auc_score(ytest, model.predict(xtest))
+auc
+```
+
+```{python}
+df.info()
+```
+
+***Choosing the model using 10-fold Cross validation, based on the accuracy metric*** 
+
+ 10 fold cross validation of classification models with removing Diabetes
+
+```{python}
+    # Selecting features and target variable
+x = df.drop(['Cholesterol','Diabetes','BP_Systolic','Exercise Hours Per Week','Heart Attack Risk', ], axis=1)
+y = df['Heart Attack Risk']
+
+# Splitting the data into training and testing sets
+xtrain, xtest, ytrain, ytest = train_test_split(x, y, test_size=0.2, random_state=42)
+
+# Scaling the features using StandardScaler
+scaler = StandardScaler()
+xtrain_scaled = scaler.fit_transform(xtrain)
+xtest_scaled = scaler.transform(xtest)
+
+# Defining classification models
+models = [
+    ('LR', LogisticRegression(n_jobs=-1)),
+    ('LDA', LinearDiscriminantAnalysis()),
+    ('KNN', KNeighborsClassifier()),
+    ('DTC', DecisionTreeClassifier()),
+    ('RFM', RandomForestClassifier(n_jobs=-1))
+]
+
+# 10-fold cross-validation
+results = []
+names = []
+
+for name, model in models:
+    kfold = KFold(n_splits=10, shuffle=True, random_state=42)
+    cv_results = cross_val_score(model, xtrain_scaled, ytrain, cv=kfold, scoring='accuracy')
+    results.append(cv_results)
+    names.append(name)
+
+    msg = "%s: %f (%f)" % (name, cv_results.mean(), cv_results.std())
+    print(msg)
+
+```
+
+In summary, based on mean accuracy and standard deviation:
+Logistic Regression, Linear Discriminant Analysis, and Random Forest Classifier seem to perform relatively well with higher mean accuracies and lower variability.
+K-Nearest Neighbors has a lower mean accuracy and slightly higher variability.
+Decision Tree Classifier has a lower mean accuracy and relatively low variability.I chose Logistic Regression as my classifier.
+### 6	Results and Conclusions
+#### 6.1	Fitting the model
+
+**Dropping columns and fitting the model**
+```{python}
+# LogisticRegression model without 'Cholesterol','Heart Attack Risk','Diabetes','BP_Systolic',
+x = df.drop(['Cholesterol','Heart Attack Risk','Diabetes','BP_Systolic','Heart Attack Risk', ], axis=1)
+y = df['Heart Attack Risk']
+xtrain, xtest, ytrain, ytest = train_test_split(x, y, test_size=0.2, random_state=42)
+#model = LogisticRegression(solver= 'lbfgs', penalty='l2', C= 0.3, n_jobs=-1) # C: inverse of regularization, smaller value, stronger regularization
+model = KNeighborsClassifier(solver= 'lbfgs', penalty='l2', C= 0.3, n_jobs=-1)
+model.fit(xtrain , ytrain)
+```
+
+<!-- LDA
+```{python}
+from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
+from sklearn.model_selection import train_test_split
+from sklearn.metrics import accuracy_score
+
+# Assuming 'df' is your DataFrame with the features and target variable
+# Also assuming that 'df' includes the columns 'Cholesterol', 'Diabetes', 'BP_Systolic'
+
+# Extract features and target variable
+x = df.drop(['Cholesterol', 'Diabetes', 'BP_Systolic', 'Heart Attack Risk'], axis=1)
+y = df['Heart Attack Risk']
+
+# Split the data into training and testing sets
+xtrain, xtest, ytrain, ytest = train_test_split(x, y, test_size=0.2, random_state=42)
+
+# Initialize the LDA model
+lda = LinearDiscriminantAnalysis()
+
+# Fit the LDA model to the training data
+lda.fit(xtrain, ytrain)
+
+# Make predictions on the test data
+y_pred = lda.predict(xtest)
+
+# Evaluate the accuracy of the model
+accuracy = accuracy_score(ytest, y_pred)
+print(f"Accuracy: {accuracy:.2f}")
+
+```
+
+-->
+
+```{python}
+# 10 fold cross validation on training data
+from sklearn.model_selection import KFold, cross_val_score
+k_folds = KFold(n_splits = 10)
+
+scores = cross_val_score(model, xtrain, ytrain, cv =k_folds)
+
+print("Cross Validation Scores: ", scores)
+print("Average CV Score: ", scores.mean())
+print("Number of CV Scores used in Average: ", len(scores))
+```
+
+The confusion matrix depicts that the number of actual False values that the model truly predicted False as (TP) is 1125, the number of actual False values that the model wrongly predicted as True (FN) is 0, the number of actual True values that the model truly predicted as True (TN) is 0 and the number of actual True values that the model wrongly predicted as False (FP) is 628.
+
+```{python}
+# LogisticRegression model prediction and classification report and score
+ypred = model.predict(xtest)
+cm = confusion_matrix(ytest, ypred)
+print(cm)
+print(classification_report(ytest, ypred))
+score = model.score(xtest, ytest)
+print(score)
+```
+
+
+```{python}
+# LogisticRegression model ROC-AUC
+auc = roc_auc_score(ytest, ypred)
+auc
+from sklearn.metrics import roc_curve
+fpr, tpr, thresholds = roc_curve(ytest, ypred)
+fpr
+tpr
+thresholds
+plt.plot([0, 1], [0, 1], linestyle='--')
+plt.plot(fpr, tpr, marker='.')
+plt.title('ROC-AUC')
+plt.xlabel('False Positive Rate')
+plt.ylabel('True Positive Rate')
+```
+
+
+```{python}
+# LogisticRegression model auc score
+auc = roc_auc_score(ytest, model.predict(xtest))
+auc
+```
+
+#### 6.2	Improving the model
+Regarding the classification metrics, the model is performing very well. But let’s see if the performance can be improved or not.
+In the model hyperparameters, I tuned the penalty =l2. l2 regularization adds an l2 penalty equal to the square of the magnitude of coefficients. By using l2, all coefficients are shrunk, but none are eliminated. This is the method which is used in Ridge regression. So, I removed the features with small coefficient to check the performance of the model. The table of model coefficient is as follows:
+
+
+```{python}
+
+# Selecting features and target variable
+x = df.drop(['Heart Attack Risk',], axis=1)
+y = df['Heart Attack Risk']
+
+# Creating and fitting the Logistic Regression model
+model = LogisticRegression(n_jobs=-1)
+model.fit(x, y)
+
+# Creating a DataFrame with coefficients
+coefficients = pd.DataFrame({'Dependent Variable': x.columns, 'Coefficient': np.transpose(model.coef_[0])})
+
+# Adding the Intercept term
+intercept_row = pd.DataFrame({'Dependent Variable': 'Intercept', 'Coefficient': model.intercept_}, index=[len(coefficients)])
+coefficients = pd.concat([coefficients, intercept_row])
+
+print(coefficients)
+
+```
+
+
+By looking at the coefficients of the model, I keep below model and check the model performance with new features.(greater)
+•	   Alcohol Consumption
+•	Sedentary Hours Per Day
+•	Obesity
+•	Diabetes  
+
+
+```{python}
+print(df.columns)
+```
+
+**Testing the model by reducing the number of features regarding their coefficient in the first model.** 
+```{python}
+# improved LogisticRegression model, classification report and score
+x = df.drop([ 
+        'Obesity', 'Alcohol Consumption',
+              'Sedentary Hours Per Day' ,
+       'Heart Attack Risk',  'BP_Diastolic',
+       ], axis=1)
+y = df['Heart Attack Risk']
+
+xtrain, xtest, ytrain, ytest = train_test_split(x, y, test_size=0.2, random_state=42)
+
+model = LogisticRegression(solver= 'lbfgs', penalty='l2', C= 0.3, n_jobs=-1) # C: inverse of regularization, smaller value, stronger regularization
+
+model.fit(xtrain , ytrain)
+ypred = model.predict(xtest)
+
+cm = confusion_matrix(ytest, ypred)
+print(cm)
+
+print(classification_report(ytest, ypred))
+
+score = model.score(xtest, ytest)
+print(score)
+```
+
+
+
+```{python}
+# improved LogisticRegression model ROC-AUC
+auc = roc_auc_score(ytest, ypred)
+auc
+
+fpr, tpr, thresholds = roc_curve(ytest, ypred)
+fpr
+tpr
+thresholds
+plt.plot([0, 1], [0, 1], linestyle='--')
+plt.plot(fpr, tpr, marker='.')
+plt.title('ROC-AUC')
+plt.xlabel('False Positive Rate')
+plt.ylabel('True Positive Rate')
+```
+
+```{python}
+auc = roc_auc_score(ytest, model.predict(xtest))
+auc
+```
+
+
+
+
+```{python}
+
+#trained Logistic Regression model
+coefficients = pd.concat([pd.DataFrame(x.columns), pd.DataFrame(np.transpose(model.coef_))], axis=1)
+column_name = ['Dependent Variable', 'Coefficient']
+coefficients.columns = column_name
+
+# Add a new row for the intercept
+coefficients.loc[len(coefficients)] = ['Intercept', model.intercept_[0]]
+
+# Display the coefficients DataFrame
+print(coefficients)
+
+```
+
+```{python}
+# 10 fold cross validation of classification models after improvment
+
+x = df.drop([ 'Diabetes',
+        'Obesity', 'Alcohol Consumption',
+       'Exercise Hours Per Week', 'Diet',
+             'Heart Attack Risk', 'BP_Systolic', 'BP_Diastolic', ], axis=1)
+y = df['Heart Attack Risk']
+
+# Splitting the data into training and testing sets
+xtrain, xtest, ytrain, ytest = train_test_split(x, y, test_size=0.2, random_state=42)
+
+# Scaling the features using StandardScaler
+scaler = StandardScaler()
+xtrain_scaled = scaler.fit_transform(xtrain)
+xtest_scaled = scaler.transform(xtest)
+
+# Defining classification models
+models = [
+    ('LR', LogisticRegression(n_jobs=-1)),
+    ('LDA', LinearDiscriminantAnalysis()),
+    ('KNN', KNeighborsClassifier()),
+    ('DTC', DecisionTreeClassifier()),
+    ('RFM', RandomForestClassifier(n_jobs=-1))
+]
+
+# 10-fold cross-validation
+results = []
+names = []
+
+for name, model in models:
+    kfold = KFold(n_splits=10, shuffle=True, random_state=42)
+    cv_results = cross_val_score(model, xtrain_scaled, ytrain, cv=kfold, scoring='accuracy')
+    results.append(cv_results)
+    names.append(name)
+
+    msg = "%s: %f (%f)" % (name, cv_results.mean(), cv_results.std())
+    print(msg)
+
+```

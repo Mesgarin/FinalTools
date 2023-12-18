@@ -1,0 +1,1322 @@
+
+---
+title: "Project"
+author: 
+  - Nastaran  Mesgari
+date: 2023-12-06
+abstract: " "
+format: 
+  html:
+    code-fold: false
+    standalone: true
+    embed-resources: true
+    toc: true
+---
+
+
+***Executive Summary***
+
+This report is provided for the data analytics project with the goal of performing a reasonable analysis of the given data. The general task of project is to understand what impacts success in the two subjects Mathematics and Portuguese, from student achievement in secondary education of two Portuguese schools. The data is in 948 rows and 40 columns. The target variable is G1. Math'. The algorithm that is used for machine learning model is Random Forest and for task 2 after categorizing the grade of math we use Random Forest, but the accuracy is better than before.
+After loading the data and understanding each variable, I cleaned the data and removed the garbage variables. Then I transformed 'famsup' related variables into yes/no, type 'object' and created new variables as an int and replace yes with 1 and no with zero, and check the categorical variable, we transform to dummy variable and change the type of them to integer for using correlation between variables and G1.math, and before that we check the standard deviation and garbage value and null value for cleaning dada (preprocessing) after that we virtualize the data for better deciding and finding the data. In the next step, I checked the linear correlation of the variables. I performed simple data exploration using visualization for all the features. I defined a new data frame "G1Math_df2" with 'G1. Math', 'absences.Port', 'famsup', 'Walc', 'failures.Port', 'famrel','higher_yes', 'studytime', 'sex_M ', 'failures.Math', 'Mjob_other', 'Fjob_other', 'Fjob_teacher', 'schoolsup_yes'
+After visualizing the distributions and outliers, I chose my feature variables and split my data set into test data and train data. Then I selected "Random Forest " among 4 algorithms by accuracy in task 1: 84%,for improving the algorit I check eagin correlation and remove 'schoolsup_yes' and check again the accuracy it better than befor and it equal to 89%  ROC-AUC  between 0.81 t0 1 for 16 classes , and task 2 after categorizing into 3 for target variable G1. math accuracy improved I check automaticly category and manualy , for better resualt in accuracy and Roc-Auc I prefer manualy cattegorizing and it set it in code by ownself, and it is 94%. the ROC-AUC was 1 for class 0.0, 0.94 for class 1.0, and 0.94 for class 2.0 in AUC signifies an improvement in the model's ability to differentiate between classes but for improving the model.
+
+## 1.Introduction
+
+Data analytics is the collection, transformation, and organization of data to conclude, make predictions, and drive informed decision-making. The data in the file is about student achievement in secondary education at two Portuguese schools. The data attributes include student grades, demographic, social, and school-related features and it was collected using school reports and questionnaires. Therefore, the algorithm used for the machine learning model is based on supervised and there are regression or classification. Classification algorithms utilize input training data to predict the likelihood or probability that the data that follows will fall into one of the predetermined categories.
+After loading the data and understanding each variable, I cleaned the data and performed data exploration using visualization. In the next step, I process models to find the best model for this type of output. We have discrete variables that are similar to continuous variables due to the small distance between them. In the end, according to these data, we checked whether by classifying the information, our prediction of students' grades would improve or not and whether the accuracy measurement would be checked. 
+
+
+
+## 2. Data Set
+
+### 2.1	student achievement Data set
+The dataset is provided in ‘csv’ type. After importing the data set, the first step is getting some information about the shape of the data set and variables.
+The data in the file is about student achievement in secondary education of two Portuguese schools. The data attributes include student grades, demographic, social and school related features and it was collected by using school reports and questionnaires. There are 948 rows and 40 Columns. (dtypes: float64(1), int64(18), object(18))*
+The features of the raw data set with their corresponding descriptions are as below:
+The features failures, paid, absences, G1, G2, G3 are recorded for the Math subject and the Portuguese subject, hence a corresponding suffix has been added to the variable name.
+
+
+
+## 3. Data Pre-Processing
+
+in this step we import the main libraries that we need
+
+```{python}
+#| label: import-libraries
+# importing main libraries
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+import seaborn as sns
+import matplotlib.pyplot as plt
+from scipy.stats import ttest_ind
+import warnings
+from sklearn.feature_selection import VarianceThreshold
+warnings.filterwarnings("ignore")
+```
+
+To use data, we need to import them and read the data. In this case, our data is CSV files, and it is in the folder whose name is data.
+
+```{python}
+#| label: data-import
+# Import your data here.
+df = pd.read_csv('data\exam_data.csv')
+df.head() 
+```
+
+```{python}
+#| label: show how many rows and coloumn in data set 
+df.shape
+```
+
+```{python}
+#| label: Get inforaion
+# getting data on dataset
+df.info()
+```
+
+### 3.1	Data Cleaning
+
+The steps followed for the data set is given below:
+
+#### 3.1.1 Dropping unnecessary columns and rows:
+
+Dropping unnecessary columns and rows is a data preprocessing step that involves removing specific columns or rows from a dataset that are deemed unnecessary for the analysis or modeling task at hand. This process is beneficial for several reasons. Reducing Dimensionality, Improving Computational Efficiency, Enhancing Model Performance, and so on .
+At this stage, I check the data, and in this step,  model must contain the variables absences.Port, famsup, Walc, failures.Port, studytime, famrel but not the variables Fedu, Medu, age. 
+so I droped the Fedu, Medu, age.
+
+```{python}
+# drop the column on dataset
+df.drop('Fedu', axis=1, inplace=True)
+df.drop('Medu', axis=1, inplace=True)
+df.drop('age', axis=1, inplace=True)
+df.info()
+```
+ 
+
+
+#### 3.1.2 Checking for missing values
+
+In most cases, we do not get complete datasets. They either have some values missing from the rows and columns or they do not have standardized values.
+So, before going ahead with the analysis, it is a good idea to check whether the dataset has any missing values. 
+in this step all data check and there didn’t find any missing value.  
+
+```{python}
+# Drop rows with null values
+df = df.dropna()
+#df.info()
+df.shape
+```
+
+in this step we check the missing value and there are no missing value anf the row not need to drop.
+
+```{python}
+# Checking for missing values in the entire dataset
+missing_values = df.isnull().sum()
+# Printing the result
+print(missing_values)
+df.shape
+```
+
+we do not have any value for replacing with missing data if we have ve can replace it or drop it . 
+
+```{python}
+
+# counting the missing value in case the data set is very big and replace it 
+num_missing_values = 0
+for column in df.columns:
+  for item in df[column].isnull():
+    if item == True:
+      num_missing_values += 1
+
+num_missing_values
+
+```
+
+
+#### 	3.1.3 Checking for garbage values
+
+Garbage value is generally a term meaning that the value in a variable doesn't have some sort of planned meaning.
+By checking the statistical information of the data, some variables have negative values, and some have 0 values which are not compatible with the definition (corresponding to the dataset).
+The detail of these values is given in the following tables:
+
+*** Negative Values and Zero for deleting ***
+
+by this code we can check the data for minus and zero if it is not compatible by the meaning they have.
+
+```{python}
+# get name the columns
+df.columns
+```
+
+
+```{python}
+# Checking the negative values of studytime
+df[df['studytime']<0]['studytime'].value_counts()
+df['studytime'].value_counts()
+```
+
+```{python}
+# Checking the 0 values of sex
+df[df['Walc']==0]['Walc'].value_counts()
+df['Walc'].value_counts()
+```
+
+
+
+we checked the data , and there are any value of minus and zero so the rows not be changed .
+
+#### 	3.1.4 Checking the distribution of each variable 
+
+Checking the distribution of each variable involves examining the spread and pattern of values within individual columns or features in a dataset. Understanding the distribution helps you gain insights into the central tendencies, variability, and shape of the data. This is crucial for making informed decisions during data analysis and modeling. Common statistical measures used to describe the distribution include mean, median, and standard deviation.
+
+In this phase, first we checked the numeric variables with zero variance (threshold = 0), *they do not have any contribution on the model*.at this data we do not have any standard deviation equal to zero. so this step we didnt drop anything.
+only drop some columns such as unnamed ( column1 for indexing ) and some column that in the task announced to drop it such as Grad in port and math.
+
+```{python}
+df_numeric = df.select_dtypes(include=np.number)
+df_numeric.shape
+```
+
+```{python}
+
+# finding zero variance variables
+selector_vr= VarianceThreshold(threshold=0)
+selector_vr.fit_transform(df_numeric)
+selector_vr.get_support(indices=True)
+```
+
+
+```{python}
+df = df.drop([ 'G3.Port','G2.Port','G1.Port','G3.Math','G2.Math'],axis=1)
+df = df.drop(['Unnamed: 0'],axis=1)
+df.head()
+df.columns
+```
+
+check the standard deviation if there are value near the zero , we can delete it . 
+```{python}
+df.describe().T
+```
+
+now we check the data type object for showing the frequency of top elemans in each feature.
+
+```{python}
+# Displaying some statistics about categorical data
+df.describe(include='object')
+```
+
+### 3.2 Data Transformation
+
+#### 3.2.1 Transforming the categorical variables
+
+If we have a column that is object for example yes or no question or if we have Boolean, we can convert them to integer.in this stage I created the new column. 
+in this step we change type of ‘famsup’ from object to integer for using the model.
+Encoding for famsup: 1 for 'yes', 0 for 'no'
+I use the new data frame for own data with own selected column for better decision in others steps.
+```{python} 
+df.describe()
+```
+
+
+```{python}
+# Specify the columns want to keep
+selected_columns = ['school', 'sex', 'address', 'famsize', 'Pstatus', 'Mjob', 'Fjob',
+       'reason', 'guardian', 'traveltime', 'studytime', 'schoolsup', 'famsup',
+       'activities', 'nursery', 'higher', 'internet', 'romantic', 'famrel',
+       'freetime', 'goout', 'Dalc', 'Walc', 'health', 'failures.Math',
+       'paid.Math', 'absences.Math', 'G1.Math', 'failures.Port', 'paid.Port',
+       'absences.Port']
+
+# Create a new DataFrame with only the selected columns
+G1Math_df = df[selected_columns]
+
+# Display the new DataFrame
+print(G1Math_df)
+
+```
+
+```{python}
+"""Ordinal Encoding for famsup: 1:yes, 0:no,"""
+#using Map Function
+G1Math_df = G1Math_df.copy()
+
+# Ordinal Encoding for famsup: 1 for 'yes', 0 for 'no'
+ordinal_map = {'yes': 1, 'no': 0}
+G1Math_df['famsup'] = G1Math_df['famsup'].map(ordinal_map)
+G1Math_df['famsup'] = G1Math_df['famsup'].astype(int)
+
+```
+
+```{python}
+G1Math_df.info()
+#G1Math_df.head()
+G1Math_df.shape
+```
+
+#### 3.2.2 Normalization, standardization, scaling
+
+The data normalization process lowers the scale and brings all the data-points on the same scale.
+Normalization: It involves scaling the values of a variable to a specific range, usually between 0 and 1
+Standardization (Z-score normalization): It transforms the data to have a mean of 0 and a standard deviation of 1.
+Scaling: is a general term for any transformation that alters the range of the data.
+I use scaling in the model selection 
+
+
+## 4 Data Exploration
+
+We put our visualization here.
+
+### 4.1 Finding outliers , dummy variable
+
+the majority of the data. The use of outlier detection methods depends on the type of data and the analysis objective. However, generally, these methods are commonly applied to numerical columns or continuous variables. The reason for this is that the concept of outliers is more definable in continuous variables, and statistical measures such as mean, standard deviation, box plots, can easily be employed for their identification.
+for founding the outliers of discrete and categorical variables we need to find the type of variables are integer or objects. We find the outliers and the Q1, Q3 and compare it with data and count how much of each independent variable out of this range and recognize and virtualize it .
+For each integer variable, I use boxplot and histogram for visualization. The plots are as bellows:
+
+
+```{python}
+G1Math_df.columns
+```
+
+```{python}
+intG1Math_df = G1Math_df.select_dtypes(include='integer')
+intG1Math_df.columns
+```
+
+we find the outliers and the Q1 , Q3 and compaire it with data and count how much of each independent variable out of this range and recognize and virtualized it . 
+
+**absences.Port**
+```{python}
+plt.figure(figsize=(10,3))
+plt.subplot(121)
+plt.hist(np.array(G1Math_df['absences.Port']) , density=True , bins=50, edgecolor='black' ,facecolor='pink', alpha=0.75)
+plt.xlabel('Value', fontsize= 10)
+plt.ylabel('Frequency', fontsize= 10)
+plt.subplot(122)
+sns.boxplot(y ='absences.Port', data=G1Math_df,palette="Blues")
+plt.xlabel('absences.Port')
+plt.show()
+```
+
+```{python}
+#calculate IQR and show thw outliers
+Q1 = G1Math_df['absences.Port'].quantile(0.25)
+Q3 = G1Math_df['absences.Port'].quantile(0.75)
+print("Q1:",Q1)
+print("Q3:",Q3)
+IQR = Q3 - Q1
+print("IQR:",IQR)
+Out1=Q1 - 1.5 * IQR
+print("Out1:",Out1)
+Out2=Q3 + 1.5 * IQR
+print("Out2:",Out2)
+outliers_absences_Port = (df['absences.Port'] < Q1 - 1.5 * IQR) | (df['absences.Port'] > Q3 + 1.5 * IQR)
+# Filter the DataFrame to get the actual outlier values
+outliers_absences_Port  = G1Math_df.loc[outliers_absences_Port, 'absences.Port']
+# Display the outlier values
+#print("absences.Port :", outliers_absences_Port)
+```
+
+```{python}
+# check the columns we can see outliers
+toll_df = G1Math_df.loc[df['absences.Port']>15]
+toll_df.shape
+
+```
+
+
+*** famsup ***
+
+```{python}
+count_table = G1Math_df['famsup'].value_counts()
+plt.figure(figsize=(8, 6))
+count_table.plot(kind='bar', color='skyblue')
+plt.title('Distribution of famsup')
+plt.xlabel('famsup Categories')
+plt.ylabel('Count')
+plt.show()
+```
+
+```{python}
+G1Math_df['famsup'].value_counts()
+```
+
+
+*** Walc ***
+
+```{python}
+count_table = G1Math_df['Walc'].value_counts()
+plt.figure(figsize=(8, 6))
+count_table.plot(kind='bar', color='skyblue')
+plt.title('Distribution of Walc')
+plt.xlabel('Walc Categories')
+plt.ylabel('Count')
+plt.show()
+```
+
+```{python}
+#calculate IQR and show thw outliers
+Q1 = G1Math_df['Walc'].quantile(0.25)
+Q3 = G1Math_df['Walc'].quantile(0.75)
+print("Q1:",Q1)
+print("Q3:",Q3)
+IQR = Q3 - Q1
+print("IQR:",IQR)
+Out1=Q1 - 1.5 * IQR
+print("Out1:",Out1)
+Out2=Q3 + 1.5 * IQR
+print("Out2:",Out2)
+outliers_Walc = (G1Math_df['Walc'] < Q1 - 1.5 * IQR) | (G1Math_df['Walc'] > Q3 + 1.5 * IQR)
+# Filter the DataFrame to get the actual outlier values
+outliers_Walc  = G1Math_df.loc[outliers_Walc, 'Walc']
+# Display the outlier values
+print("Walc :", outliers_Walc)
+```
+
+```{python}
+G1Math_df['Walc'].value_counts()
+G1Math_df.shape
+```
+
+
+*** failures.Port ***
+```{python}
+count_table = G1Math_df['failures.Port'].value_counts()
+plt.figure(figsize=(8, 6))
+count_table.plot(kind='bar', color='skyblue')
+plt.title('Distribution of failures.Port')
+plt.xlabel('failures.Port Categories')
+plt.ylabel('Count')
+plt.show()
+```
+
+```{python}
+plt.figure(figsize=(10,3))
+plt.subplot(121)
+plt.hist(np.array(G1Math_df['failures.Port']) , density=True , bins=50, edgecolor='black' ,facecolor='pink', alpha=0.75)
+plt.xlabel('Value', fontsize= 10)
+plt.ylabel('Frequency', fontsize= 10)
+plt.subplot(122)
+sns.boxplot(y ='Walc', data=G1Math_df,palette="Blues")
+plt.xlabel('failures.Port')
+plt.show()
+```
+
+```{python}
+#calculate IQR and show thw outliers
+Q1 = G1Math_df['failures.Port'].quantile(0.25)
+Q3 = G1Math_df['failures.Port'].quantile(0.75)
+print("Q1:",Q1)
+print("Q3:",Q3)
+IQR = Q3 - Q1
+print("IQR:",IQR)
+Out1=Q1 - 1.5 * IQR
+print("Out1:",Out1)
+Out2=Q3 + 1.5 * IQR
+print("Out2:",Out2)
+outliers_failures_Port = (G1Math_df['failures.Port'] < Q1 - 1.5 * IQR) | (G1Math_df['failures.Port'] > Q3 + 1.5 * IQR)
+# Filter the DataFrame to get the actual outlier values
+outliers_failures_Port = G1Math_df.loc[outliers_failures_Port, 'failures.Port']
+# Display the outlier values
+#print("failures.Port :", outliers_failures_Port)
+```
+
+
+*** studytime ***
+```{python}
+count_table = G1Math_df['studytime'].value_counts()
+plt.figure(figsize=(8, 6))
+count_table.plot(kind='bar', color='skyblue')
+plt.title('Distribution of studytime')
+plt.xlabel('studytime Categories')
+plt.ylabel('Count')
+plt.show()
+```
+
+```{python}
+plt.figure(figsize=(10,3))
+plt.subplot(121)
+plt.hist(np.array(G1Math_df['studytime']) , density=True , bins=50, edgecolor='black' ,facecolor='pink', alpha=0.75)
+plt.xlabel('Value', fontsize= 10)
+plt.ylabel('Frequency', fontsize= 10)
+plt.subplot(122)
+sns.boxplot(y ='Walc', data=G1Math_df,palette="Blues")
+plt.xlabel('studytime')
+plt.show()
+```
+
+```{python}
+#calculate IQR and show thw outliers
+Q1 = G1Math_df['studytime'].quantile(0.25)
+Q3 = G1Math_df['studytime'].quantile(0.75)
+print("Q1:",Q1)
+print("Q3:",Q3)
+IQR = Q3 - Q1
+print("IQR:",IQR)
+Out1=Q1 - 1.5 * IQR
+print("Out1:",Out1)
+Out2=Q3 + 1.5 * IQR
+print("Out2:",Out2)
+outliers_studytime = (G1Math_df['studytime'] < Q1 - 1.5 * IQR) | (G1Math_df['studytime'] > Q3 + 1.5 * IQR)
+# Filter the DataFrame to get the actual outlier values
+outliers_studytime = G1Math_df.loc[outliers_studytime, 'studytime']
+# Display the outlier values
+#print("failures.Port :", outliers_studytime)
+```
+
+```{python}
+# check the columns we can see outliers
+toll3= G1Math_df.loc[df['studytime']<3.5]
+toll1 = G1Math_df.loc[df['studytime']>1]
+G1Math_df.shape
+```
+
+```{python}
+G1Math_df['studytime'].value_counts()
+```
+
+
+*** famrel ***
+```{python}
+count_table = G1Math_df['famrel'].value_counts()
+plt.figure(figsize=(8, 6))
+count_table.plot(kind='bar', color='skyblue')
+plt.title('Distribution of famrel')
+plt.xlabel('famrel Categories')
+plt.ylabel('Count')
+plt.show()
+```
+
+```{python}
+plt.figure(figsize=(10,3))
+plt.subplot(121)
+plt.hist(np.array(G1Math_df['famrel']) , density=True , bins=50, edgecolor='black' ,facecolor='pink', alpha=0.75)
+plt.xlabel('Value', fontsize= 10)
+plt.ylabel('Frequency', fontsize= 10)
+plt.subplot(122)
+sns.boxplot(y ='famrel', data=G1Math_df,palette="Blues")
+plt.xlabel('famrel')
+plt.show()
+```
+
+
+```{python}
+#calculate IQR and show thw outliers
+Q1 = G1Math_df['famrel'].quantile(0.25)
+Q3 = G1Math_df['famrel'].quantile(0.75)
+print("Q1:",Q1)
+print("Q3:",Q3)
+IQR = Q3 - Q1
+print("IQR:",IQR)
+Out1=Q1 - 1.5 * IQR
+print("Out1:",Out1)
+Out2=Q3 + 1.5 * IQR
+print("Out2:",Out2)
+outliers_famrel = (G1Math_df['famrel'] < Q1 - 1.5 * IQR) | (G1Math_df['famrel'] > Q3 + 1.5 * IQR)
+# Filter the DataFrame to get the actual outlier values
+outliers_famrel  = G1Math_df.loc[outliers_famrel, 'famrel']
+# Display the outlier values
+#print("famrel :", outliers_famrel)
+```
+```{python}
+# check the columns we can see outliers
+toll = G1Math_df.loc[G1Math_df['famrel']>6.5]
+toll.shape
+```
+
+** G1.Math** 
+```{python}
+plt.figure(figsize=(10,3))
+plt.subplot(121)
+plt.hist(np.array(G1Math_df['G1.Math']) , density=True , bins=50, edgecolor='black' ,facecolor='pink', alpha=0.75)
+plt.xlabel('Value', fontsize= 10)
+plt.ylabel('Frequency', fontsize= 10)
+plt.subplot(122)
+sns.boxplot(y ='G1.Math', data=df,palette="Blues")
+plt.xlabel('G1.Math')
+plt.show()
+```
+```{python}
+#calculate IQR and show thw outliers
+Q1 = G1Math_df['G1.Math'].quantile(0.25)
+Q3 = G1Math_df['G1.Math'].quantile(0.75)
+print("Q1:",Q1)
+print("Q3:",Q3)
+IQR = Q3 - Q1
+print("IQR:",IQR)
+Out1=Q1 - 1.5 * IQR
+print("Out1:",Out1)
+Out2=Q3 + 1.5 * IQR
+print("Out2:",Out2)
+outliers_famrel = (G1Math_df['G1.Math'] < Q1 - 1.5 * IQR) | (G1Math_df['G1.Math'] > Q3 + 1.5 * IQR)
+# Filter the DataFrame to get the actual outlier values
+outliers_famrel  = G1Math_df.loc[outliers_famrel, 'G1.Math']
+# Display the outlier values
+#print("famrel :", outliers_famrel)
+```
+```{python}
+# check the columns we can see outliers
+toll= G1Math_df.loc[df['G1.Math']>20.5]
+toll.shape
+```
+
+Dummy variables
+
+If we have categorical variables, we need to change our categorical variables into dummy variables (using get_dummies or OneHotEncoder).
+for finding the corrolation the independent variable should be integer so this step we can check the variables are integer, 
+```{python}
+intG1Math_df = G1Math_df.select_dtypes(include='integer')
+intG1Math_df.columns
+```
+
+
+```{python}
+
+# Checking the linear correlation of variables
+df2=G1Math_df[[ 
+'traveltime', 'studytime', 'famsup', 'famrel', 'freetime', 'goout',
+       'Dalc', 'Walc', 'health', 'failures.Math', 'absences.Math', 'G1.Math',
+       'failures.Port', 'absences.Port']]
+corr_matrix = df2.corr()
+corr_matrix['G1.Math'].sort_values(ascending = False)
+```
+
+```{python}
+
+# Checking the linear correlation of variables
+df2=G1Math_df[[ 
+'traveltime', 'studytime', 'famsup', 'famrel', 'freetime', 'goout',
+       'Dalc', 'Walc', 'health', 'failures.Math', 'absences.Math', 'G1.Math',
+       'failures.Port', 'absences.Port']]
+corr_matrix = df2.corr()
+threshold = 0.10
+highly_correlated_variables = corr_matrix[corr_matrix['G1.Math'].abs() > threshold]['G1.Math'].index.tolist()
+
+# Filter the DataFrame to include only highly correlated variables
+subset_df = df2[highly_correlated_variables]
+subset_df.columns
+```
+
+before creating dummy variable betwen the variables there are study time with corrolation 0.13 and failours.math :-0,40 and absences.port -0.17  is better the others are integer variables. 
+in this step we can drop the other coloumns for managing beter ( we dont drop this columns becouse in the task say that famrel,Walc ,famsup,traveltime,failures.Port,absences.Port)
+```{python}
+G1Math_df = G1Math_df.drop([ 'freetime','health','Dalc','absences.Math','traveltime',],axis=1)
+```
+
+```{python}
+G1Math_df.columns
+G1Math_df.shape
+```
+
+
+this step we have 26 independent variables at the first we have 40 variables . 
+
+the type of the categorical variables are object: 
+1-school
+```{python}
+"""One_hot encoding for ''school'' """
+G1Math_df= pd.get_dummies(G1Math_df, columns = ['school'])
+```
+
+2-sex, 
+```{python}
+"""One_hot encoding for 'Sex(Gender)' """
+G1Math_df = pd.get_dummies(G1Math_df, columns = ['sex'])
+```
+
+
+3-address
+```{python}
+"""One_hot encoding for 'address' """
+G1Math_df = pd.get_dummies(G1Math_df, columns = ['address'])
+```
+
+4- famsize
+```{python}
+"""One_hot encoding for 'famsize' """
+G1Math_df = pd.get_dummies(G1Math_df, columns = ['famsize'])
+```
+
+5- Pstatus
+```{python}
+"""One_hot encoding for 'Pstatus' """
+G1Math_df = pd.get_dummies(G1Math_df, columns = ['Pstatus'])
+```
+
+6- Mjob
+```{python}
+"""One_hot encoding for 'Mjob' """
+G1Math_df = pd.get_dummies(G1Math_df, columns = ['Mjob'])
+```
+
+7- 'Fjob'
+```{python}
+"""One_hot encoding for 'Fjob' """
+G1Math_df = pd.get_dummies(G1Math_df, columns = ['Fjob'])
+```
+
+8- 'reason'
+```{python}
+"""One_hot encoding for 'reason' """
+G1Math_df= pd.get_dummies(G1Math_df, columns = ['reason'])
+```
+
+9- 'guardian'
+
+```{python}
+"""One_hot encoding for 'guardian' """
+G1Math_df = pd.get_dummies(G1Math_df, columns = ['guardian'])
+```
+
+
+10- 'schoolsup'
+```{python}
+"""One_hot encoding for 'schoolsup' """
+G1Math_df = pd.get_dummies(G1Math_df, columns = ['schoolsup'])
+```
+
+11- 'activities'
+```{python}
+"""One_hot encoding for 'activities' """
+G1Math_df = pd.get_dummies(G1Math_df, columns = ['activities'])
+```
+
+12-'nursery'
+```{python}
+"""One_hot encoding for 'nursery' """
+G1Math_df = pd.get_dummies(G1Math_df, columns = ['nursery'])
+```
+
+13- 'higher'
+
+```{python}
+"""One_hot encoding for 'higher' """
+G1Math_df = pd.get_dummies(G1Math_df, columns = ['higher'])
+```
+
+14- 'internet'
+
+```{python}
+"""One_hot encoding for 'internet' """
+G1Math_df = pd.get_dummies(G1Math_df, columns = ['internet'])
+``` 
+
+
+15-'romantic'
+
+```{python}
+"""One_hot encoding for 'romantic' """
+G1Math_df = pd.get_dummies(G1Math_df, columns = ['romantic'])
+``` 
+
+
+16-paid.Math
+
+```{python}
+"""One_hot encoding for paid.Math """
+G1Math_df = pd.get_dummies(G1Math_df, columns = ['paid.Math'])
+``` 
+
+17- paid.Port
+
+```{python}
+"""One_hot encoding for 'paid.Port' """
+G1Math_df = pd.get_dummies(G1Math_df, columns = ['paid.Port'])
+``` 
+```{python}
+#G1Math_df.dtypes
+#G1Math_df.info()
+#G1Math_df.columns
+G1Math_df.shape
+```
+
+after dummy variable we have 51 columns and the type of them are boolian and again for getting correlation we should be convert them to integer . 
+
+```{python}
+"""Converting 'Object' and 'Boolean' Datatype into int"""
+cat_columns = ['sex_F', 'sex_M', 'school_GP',
+       'school_MS', 'address_R', 'address_U', 'famsize_GT3', 'famsize_LE3',
+       'Pstatus_A', 'Pstatus_T', 'Mjob_at_home', 'Mjob_health', 'Mjob_other',
+       'Mjob_services', 'Mjob_teacher', 'Fjob_at_home', 'Fjob_health',
+       'Fjob_other', 'Fjob_services', 'Fjob_teacher', 'reason_course',
+       'reason_home', 'reason_other', 'reason_reputation', 'guardian_father',
+       'guardian_mother', 'guardian_other', 'schoolsup_no', 'schoolsup_yes',
+       'activities_no', 'activities_yes', 'nursery_no', 'nursery_yes',
+       'higher_no', 'higher_yes', 'internet_no', 'internet_yes', 'romantic_no',
+       'romantic_yes', 'paid.Math_no', 'paid.Math_yes', 'paid.Port_no',
+       'paid.Port_yes']
+G1Math_df[cat_columns] = G1Math_df[cat_columns].astype(int)
+```
+
+```{python}
+G1Math_df.columns
+#G1Math_df.info()
+#G1Math_df.shape
+```
+```{python}
+# Checking the linear correlation of variables
+df2=G1Math_df[['studytime', 'famsup', 'famrel', 'goout', 'Walc', 'failures.Math',
+       'G1.Math', 'failures.Port', 'absences.Port', 'school_GP', 'school_MS',
+       'sex_F', 'sex_M', 'address_R', 'address_U', 'famsize_GT3',
+       'famsize_LE3', 'Pstatus_A', 'Pstatus_T', 'Mjob_at_home', 'Mjob_health',
+       'Mjob_other', 'Mjob_services', 'Mjob_teacher', 'Fjob_at_home',
+       'Fjob_health', 'Fjob_other', 'Fjob_services', 'Fjob_teacher',
+       'reason_course', 'reason_home', 'reason_other', 'reason_reputation',
+       'guardian_father', 'guardian_mother', 'guardian_other', 'schoolsup_no',
+       'schoolsup_yes', 'activities_no', 'activities_yes', 'nursery_no',
+       'nursery_yes', 'higher_no', 'higher_yes', 'internet_no', 'internet_yes',
+       'romantic_no', 'romantic_yes', 'paid.Math_no', 'paid.Math_yes',
+       'paid.Port_no', 'paid.Port_yes']]
+corr_matrix = df2.corr()
+corr_matrix['G1.Math'].sort_values(ascending = False)
+```
+
+
+```{python}
+
+# Checking the linear correlation of variables
+df2=G1Math_df[[ 
+'studytime', 'famsup', 'famrel', 'goout', 'Walc', 'failures.Math',
+       'G1.Math', 'failures.Port', 'absences.Port', 'school_GP', 'school_MS',
+       'sex_F', 'sex_M', 'address_R', 'address_U', 'famsize_GT3',
+       'famsize_LE3', 'Pstatus_A', 'Pstatus_T', 'Mjob_at_home', 'Mjob_health',
+       'Mjob_other', 'Mjob_services', 'Mjob_teacher', 'Fjob_at_home',
+       'Fjob_health', 'Fjob_other', 'Fjob_services', 'Fjob_teacher',
+       'reason_course', 'reason_home', 'reason_other', 'reason_reputation',
+       'guardian_father', 'guardian_mother', 'guardian_other', 'schoolsup_no',
+       'schoolsup_yes', 'activities_no', 'activities_yes', 'nursery_no',
+       'nursery_yes', 'higher_no', 'higher_yes', 'internet_no', 'internet_yes',
+       'romantic_no', 'romantic_yes', 'paid.Math_no', 'paid.Math_yes',
+       'paid.Port_no', 'paid.Port_yes']]
+corr_matrix = df2.corr()
+threshold = 0.15
+highly_correlated_variables = corr_matrix[corr_matrix['G1.Math'].abs() > threshold]['G1.Math'].index.tolist()
+
+# Filter the DataFrame to include only highly correlated variables
+subset_df = df2[highly_correlated_variables]
+subset_df.columns
+```
+
+so fo this correlation we only use failers.math and heigher_yes, sex_M ,Fjob_teacher ,schoolsup_no  and the other coloumns we need for them . 
+```{python}
+
+# Specify the columns you want to keep
+selected_columns = ['G1.Math','absences.Port', 'famsup', 'Walc','failures.Port','famrel', 'higher_yes','studytime','sex_M','failures.Math',   'sex_F',
+       'Mjob_other', 'Fjob_other', 'Fjob_teacher', 'schoolsup_no',
+       'schoolsup_yes', 'higher_no',]
+
+# Create a new DataFrame with only the selected columns
+G1Math_df2 = G1Math_df[selected_columns]
+
+# Display the new DataFrame
+print(G1Math_df2)
+
+```
+
+
+### 4.2 Correlation between different features:
+Correlation is the way of understanding the strength of the relationship between 2 variables or features in a dataset. Correlation coefficients determine this strength by indicating a value between [-1,1] where -1 indicates a very strong negative relationship, 0 indicates no relationship and 1 indicates strong positive relationship. Pearson correlation is one of the most widely used correlation method and it indicates the linear relationship between 2 variables. The heatmap of correlation between all variables of the dataset is given bellow: 
+
+after checking the corrolation I selected, 'G1.Math','absences.Port', 'famsup', 'Walc','failures.Port','famrel', 'higher_yes','studytime','sex_M','failures.Math','Mjob_other', 'Fjob_other', 'Fjob_teacher','schoolsup_yes' for finding the model becouase this variable has corrolation with G1.math more than another columns.
+
+```{python}
+#| label2: Get correlation visually
+plt.figure(figsize = (19,10))
+sns.heatmap(G1Math_df2[['G1.Math','absences.Port', 'famsup', 'Walc','failures.Port','famrel', 'higher_yes','studytime','sex_M','failures.Math',
+       'Mjob_other', 'Fjob_other', 'Fjob_teacher','higher_no','sex_F', 'schoolsup_no',
+       'schoolsup_yes',  ]].corr(),annot=True, annot_kws={"size": 10}, linewidth=1, linecolor="black")
+```
+
+
+
+```{python}
+
+# Specify the columns you want to keep
+selected_columns = ['G1.Math','absences.Port', 'famsup', 'Walc','failures.Port','famrel', 'higher_yes','studytime','sex_M','failures.Math',
+       'Mjob_other', 'Fjob_other', 'Fjob_teacher',
+       'schoolsup_yes',]
+
+# Create a new DataFrame with only the selected columns
+G1Math_df2 = G1Math_df[selected_columns]
+
+# Display the new DataFrame
+print(G1Math_df2)
+
+```
+
+
+and check it again 
+```{python}
+#| label: Get correlation visually
+plt.figure(figsize = (19,10))
+sns.heatmap(G1Math_df2[['G1.Math','absences.Port', 'famsup', 'Walc','failures.Port','famrel', 'higher_yes','studytime','sex_M','failures.Math','Mjob_other', 'Fjob_other', 'Fjob_teacher','schoolsup_yes' ]].corr(),annot=True, annot_kws={"size": 10}, linewidth=1, linecolor="black")
+```
+
+so we can drop 'higher_no','sex_F', 'schoolsup_no' becase they are heigh correlation with another part in our groups.
+
+as you can see , there are a corrolation between failer.math and the failers.port: 0.51 and G1.math and failer.math corrolation is minus and G1.math and heier_yes has corelation +0.24 .
+
+```{python}
+# Checking the linear correlation of variables
+df2=G1Math_df2[['G1.Math','absences.Port', 'famsup', 'Walc','failures.Port','famrel', 'higher_yes','studytime','sex_M','failures.Math','Mjob_other', 'Fjob_other', 'Fjob_teacher','schoolsup_yes']]
+corr_matrix = df2.corr()
+corr_matrix['G1.Math'].sort_values(ascending = False)
+```
+
+```{python}
+
+# Checking the linear correlation of variables
+df2=G1Math_df[[ 
+'G1.Math','absences.Port', 'famsup', 'Walc','failures.Port','famrel', 'higher_yes','studytime','sex_M','failures.Math','Mjob_other', 'Fjob_other', 'Fjob_teacher','schoolsup_yes']]
+corr_matrix = df2.corr()
+threshold = 0.15
+highly_correlated_variables = corr_matrix[corr_matrix['G1.Math'].abs() > threshold]['G1.Math'].index.tolist()
+
+# Filter the DataFrame to include only highly correlated variables
+subset_df = df2[highly_correlated_variables]
+subset_df.columns
+```
+```{python}
+G1Math_df2.columns
+```
+
+The given values represent the correlation coefficients between the 'G1.Math' variable and other variables in the dataset. Here's an explanation:
+
+G1.Math: This is the target variable.
+Positive Correlations:
+
+higher_yes: There is a positive correlation of approximately 0.24 between 'higher_yes' (aspiration for higher education) and 'G1.Math'. This suggests that students who aspire to pursue higher education tend to have higher grades in the first period.
+sex_M: There is a positive correlation of approximately 0.17 between 'sex_M' (male gender) and 'G1.Math'. This implies that male students may have slightly higher grades in the first period.
+Fjob_teacher: There is a positive correlation of approximately 0.17 between 'Fjob_teacher' (father's job as a teacher) and 'G1.Math'. This indicates that students whose fathers work as teachers may have slightly higher grades.
+Negative Correlations:
+
+studytime: There is a positive correlation of approximately 0.14 between 'studytime' and 'G1.Math'. This implies that students who spend more time studying may have slightly higher grades.
+famrel: There is a positive correlation of approximately 0.04 between 'famrel' (quality of family relationships) and 'G1.Math'. This suggests that students with better family relationships may have slightly higher grades.
+Negative Correlations:
+
+Walc: There is a negative correlation of approximately -0.07 between 'Walc' (weekend alcohol consumption) and 'G1.Math'. This indicates a slight tendency that higher weekend alcohol consumption may be associated with slightly lower grades.
+famsup: There is a negative correlation of approximately -0.07 between 'famsup' (family educational support) and 'G1.Math'. This suggests that students who receive more family educational support may have slightly lower grades.
+failures.Port: There is a negative correlation of approximately -0.11 between 'failures.Port' (number of past class failures in the Portuguese subject) and 'G1.Math'. This indicates that students with fewer past class failures in the Portuguese subject tend to have higher grades.
+Fjob_other: There is a negative correlation of approximately -0.17 between 'Fjob_other' (father's job other than teacher, health, or services) and 'G1.Math'. This implies that students whose fathers have jobs other than teacher, health, or services may have slightly lower grades.
+schoolsup_yes: There is a negative correlation of approximately -0.17 between 'schoolsup_yes' (extra educational support at school) and 'G1.Math'. This suggests that students receiving extra educational support at school may have slightly lower grades.
+absences.Port: There is a negative correlation of approximately -0.17 between 'absences.Port' (number of school absences in the Portuguese subject) and 'G1.Math'. This implies that students with fewer school absences may have higher grades.
+failures.Math: There is a negative correlation of approximately -0.41 between 'failures.Math' (number of past class failures in the Mathematics subject) and 'G1.Math'. This indicates a strong negative correlation, suggesting that students with fewer past class failures in the Mathematics subject tend to have higher grades
+
+## 5. Data Analysis (Visualization and checking the distribution of each variable)
+
+### 5.1 Data Modeling
+
+```{python}
+G1Math_df2['G1.Math'].unique()
+G1Math_df2['G1.Math'].value_counts()
+#G1Math_df2.info()
+```
+
+A summary of each algorithm is described below.
+
+
+Linear Discriminant Analysis or Normal Discriminant Analysis or Discriminant Function Analysis is a dimensionality reduction technique that is commonly used for supervised classification problems. It is used for modelling differences in groups i.e. separating two or more classes. It is used to project the features in higher dimension space into a lower dimension space. Linear discriminant analysis is popular when we have more than two response classes, because it also provides low-dimensional views of the data
+
+K-Nearest Neighbors algorithm, also known as KNN or k-NN, is a non-parametric algorithm (which means it does not make any assumption on underlying data), supervised learning classifier, which uses proximity to make classifications or predictions about the grouping of an individual data point. a class label is assigned based on a majority vote.
+
+Decision Tree is a type of supervised machine learning used to categorize or make predictions based on how a previous set of questions were answered. The model is a form of supervised learning, meaning that the model is trained and tested on a set of data that contains the desired categorization. The tree can be explained by two entities, namely decision nodes and leaves.
+
+Random Forest is a collection (a.k.a. ensemble) of many decision trees. A decision tree is a flow chart which separates data based on some condition. If a condition is true, you move on a path otherwise, you move on to another path.
+
+### 5.2 Model Selection Task 1
+
+```{python}
+# Import necessary libraries
+from sklearn.model_selection import cross_val_score
+from sklearn.linear_model import LinearRegression
+from sklearn.metrics import make_scorer, mean_squared_error, r2_score
+from sklearn.preprocessing import StandardScaler
+from sklearn.model_selection import train_test_split
+from sklearn.tree import DecisionTreeClassifier
+from sklearn.metrics import accuracy_score, classification_report
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.model_selection import KFold
+from sklearn.metrics import confusion_matrix
+from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
+```
+
+In order to select my classifier, I performed a 10-fold cross validation algorithm on the above-mentioned classification models and calculated the accuracy (average of all 10 folds) of each model. The result of the cross validation is as follows:
+
+
+
+```{python}
+
+# Selecting features and target variable
+x = G1Math_df2.drop(['G1.Math', ], axis=1)
+y = G1Math_df2['G1.Math']
+
+# Splitting the data into training and testing sets
+xtrain, xtest, ytrain, ytest = train_test_split(x, y, test_size=0.2, random_state=42)
+
+# Scaling the features using StandardScaler
+scaler = StandardScaler()
+xtrain_scaled = scaler.fit_transform(xtrain)
+xtest_scaled = scaler.transform(xtest)
+
+# Defining classification models
+models = [
+     ('LDA', LinearDiscriminantAnalysis()),
+    ('KNN', KNeighborsClassifier()),
+    ('DTC', DecisionTreeClassifier()),
+    ('RFM', RandomForestClassifier(n_jobs=-1))
+]
+
+# 10-fold cross-validation
+results = []
+names = []
+
+for name, model in models:
+    kfold = KFold(n_splits=10, shuffle=True, random_state=42)
+    cv_results = cross_val_score(model, xtrain_scaled, ytrain, cv=kfold, scoring='accuracy')
+    results.append(cv_results)
+    names.append(name)
+
+    msg = "%s: %f (%f)" % (name, cv_results.mean(), cv_results.std())
+    print(msg)
+
+```
+
+```{python}
+# RandomForestClassifier,  prediction and classification report and score
+
+model = RandomForestClassifier(n_estimators=20, n_jobs=-1)
+model.fit(xtrain,ytrain)
+ypred = model.predict(xtest)
+
+from sklearn.metrics import confusion_matrix
+cm = confusion_matrix(ytest, ypred)
+print(cm)
+
+from sklearn.metrics import classification_report
+print(classification_report(ytest, ypred))
+
+score = model.score(xtest, ytest)
+print(score)
+```
+
+```{python}
+import matplotlib.pyplot as plt
+from sklearn.metrics import roc_curve
+from sklearn.preprocessing import LabelBinarizer
+from sklearn import metrics
+from sklearn.metrics import roc_auc_score
+# Assuming y_test and ypred are your true labels and predicted labels respectively
+
+# Binarize the labels
+lb = LabelBinarizer()
+y_test = lb.fit_transform(ytest)
+ypred = lb.transform(ypred)
+
+# Calculate ROC curve for each class
+plt.figure(figsize=(8, 6))
+
+for i in range(len(lb.classes_)):
+    fpr, tpr, _ = roc_curve(y_test[:, i], ypred[:, i])
+    roc_auc_class = roc_auc_score(y_test[:, i], ypred[:, i])
+    plt.plot(fpr, tpr, label=f"Class '{lb.classes_[i]}' (ROC-AUC = {roc_auc_class:.2f})")
+
+# Plotting for random chance
+plt.plot([0, 1], [0, 1], linestyle='--', color='black', label='Chance', alpha=0.5)
+
+plt.xlabel('False Positive Rate')
+plt.ylabel('True Positive Rate')
+plt.title('One-Versus-Rest (OvR) ROC-AUC for each class')
+plt.legend()
+plt.grid()
+plt.show()
+```
+as you can see the RFM has the best accuracy and after that DTC can be selected for this model between the other classifier models.
+
+### 5.3 Improving the model Task 1 
+
+```{python}
+G1Math_df2.head()
+G1Math_df2.info()
+G1Math_df2.columns
+```
+
+```{python}
+df2=G1Math_df2[['G1.Math', 'absences.Port', 'famsup', 'Walc', 'failures.Port', 'famrel',
+       'higher_yes', 'studytime', 'sex_M', 'failures.Math', 'Mjob_other',
+       'Fjob_other', 'Fjob_teacher', 'schoolsup_yes']]
+
+corr_matrix = df2.corr()
+corr_matrix['G1.Math'].sort_values(ascending = False)
+```
+
+To check this more precisely, I removed schoolsup_yes from my feature variables and performed a Random Forest Classifier model. I split my data set into train (80% of the observation) and test (20% of the observation), fitted the model on train data and performed a prediction on my test data. The classification report is as follows; the accuracy reduced to 82%.
+
+ with out removing the schoolsup_yes we have 86% accuracy 
+and the roc-auc for each classess between 89 to 1 . 
+
+
+I drop the schoolsup_yes for checking the model  
+```{python}
+# Selecting features and target variable
+x = G1Math_df2.drop(['G1.Math','schoolsup_yes' ], axis=1)
+y = G1Math_df2['G1.Math']
+
+# Splitting the data into training and testing sets
+xtrain, xtest, ytrain, ytest = train_test_split(x, y, test_size=0.2, random_state=42)
+
+# Scaling the features using StandardScaler
+scaler = StandardScaler()
+xtrain_scaled = scaler.fit_transform(xtrain)
+xtest_scaled = scaler.transform(xtest)
+
+# Defining classification models
+models = [
+     ('LDA', LinearDiscriminantAnalysis()),
+    ('KNN', KNeighborsClassifier()),
+    ('DTC', DecisionTreeClassifier()),
+    ('RFM', RandomForestClassifier(n_jobs=-1))
+]
+
+# 10-fold cross-validation
+results = []
+names = []
+
+for name, model in models:
+    kfold = KFold(n_splits=10, shuffle=True, random_state=42)
+    cv_results = cross_val_score(model, xtrain_scaled, ytrain, cv=kfold, scoring='accuracy')
+    results.append(cv_results)
+    names.append(name)
+
+    msg = "%s: %f (%f)" % (name, cv_results.mean(), cv_results.std())
+    print(msg)
+
+```
+
+
+
+```{python}
+# 10 fold cross validation on training data
+from sklearn.model_selection import KFold, cross_val_score
+k_folds = KFold(n_splits = 10)
+
+scores = cross_val_score(model, xtrain, ytrain, cv =k_folds)
+
+print("Cross Validation Scores: ", scores)
+print("Average CV Score: ", scores.mean())
+print("Number of CV Scores used in Average: ", len(scores))
+```
+
+To check this more precisely, I removed schoolsup_yes from my feature variables and performed a Random Forest Classifier model. I split my data set into train (80% of the observation) and test (20% of the observation), fitted the model on train data and performed a prediction on my test data. The classification report is as follows; 
+model's average cross-validation score is approximately 0.84, and this is the average performance across the 10 folds. It provides an estimate of how well  model is expected to generalize to new, unseen data.
+
+### 5.4 Model Selection Task 2 
+Task 2: Bin the target variable G1. Math is divided into 3 categories in such a way that the resulting bins contain roughly an equal number of cases. Use this newly created categorical variable as response for a classification model. Again, do not use any other grade feature and build a model that contains the variables absences. Port, famsup, Walc, failures. Port, study time, famrel but not the variables Fedu, Medu, age.
+After categorizing we can check the data with the classification, after training the data an prediction we can check the accuracy and select the best algorithm with the high accuracy.
+
+
+
+```{python}
+G1Math_df2.columns
+```
+```{python}
+from sklearn.preprocessing import KBinsDiscretizer
+# Select features and target variable
+features = ['G1.Math', 'absences.Port', 'famsup', 'Walc', 'failures.Port', 'famrel',
+       'higher_yes', 'studytime', 'sex_M', 'failures.Math', 'Mjob_other',
+       'Fjob_other', 'Fjob_teacher', 'schoolsup_yes' ]
+target = 'G1.Math'
+
+
+# Bin the target variable into 3 categories
+#k_bins = KBinsDiscretizer(n_bins=3, encode='ordinal', strategy='quantile')
+#G1Math_df2['G1.Math_binned'] = k_bins.fit_transform(G1Math_df2[[target]])
+#
+
+# Create a new categorical variable based on the conditions for G2.Math
+bins = [0, 6, 13, 20]
+labels = [0, 1, 2]
+G1Math_df2['G1.Math_binned'] = pd.cut(G1Math_df2['G1.Math'], bins=bins, labels=labels, right=False)
+
+features = [ 'absences.Port', 'famsup', 'Walc', 'failures.Port', 'famrel',
+       'higher_yes', 'studytime', 'sex_M', 'failures.Math', 'Mjob_other',
+       'Fjob_other', 'Fjob_teacher', 'schoolsup_yes' ]
+target = 'G1.Math_binned'
+```
+
+```{python}
+plt.figure(figsize=(5,5))
+valuetable = pd.crosstab(G1Math_df2['failures.Math'],G1Math_df2['G1.Math_binned']) # ,normalize='index'
+valuetable.plot.bar(stacked=True)
+plt.title('failures.Math / G1.Math_binned')
+plt.xlabel('failures.Math')
+plt.ylabel('G1.Math_binned')
+```
+
+```{python}
+corr_matrix = G1Math_df2.corr()
+corr_matrix['G1.Math_binned'].sort_values(ascending = False)
+```
+
+```{python}
+sns.heatmap(G1Math_df2[['G1.Math_binned','absences.Port', 'famsup', 'Walc','failures.Port','famrel', 'higher_yes','studytime','sex_M','failures.Math',
+       'Mjob_other', 'Fjob_other', 'Fjob_teacher', 
+       'schoolsup_yes',  ]].corr(), annot=True, annot_kws={"size": 6}, linewidth=1, linecolor="black" )
+plt.show()
+```
+
+```{python}
+
+# Select features and the binned target variable for the model
+X = G1Math_df2[features]
+y = G1Math_df2['G1.Math_binned']
+
+# Split the data into training and testing sets
+xtrain, xtest, ytrain, ytest = train_test_split(X, y, test_size=0.2, random_state=42)
+
+# Scaling the features using StandardScaler
+scaler = StandardScaler()
+xtrain_scaled = scaler.fit_transform(xtrain)
+xtest_scaled = scaler.transform(xtest)
+```
+
+```{python}
+
+
+# Selecting features and target variable
+x = G1Math_df2.drop(['G1.Math_binned','G1.Math' ], axis=1)
+y = G1Math_df2['G1.Math_binned']
+
+# Splitting the data into training and testing sets
+xtrain, xtest, ytrain, ytest = train_test_split(x, y, test_size=0.2, random_state=42)
+
+# Scaling the features using StandardScaler
+scaler = StandardScaler()
+xtrain_scaled = scaler.fit_transform(xtrain)
+xtest_scaled = scaler.transform(xtest)
+
+# Defining classification models
+models = [
+     ('LDA', LinearDiscriminantAnalysis()),
+    ('KNN', KNeighborsClassifier()),
+    ('DTC', DecisionTreeClassifier()),
+    ('RFM', RandomForestClassifier(n_jobs=-1))
+]
+
+# 10-fold cross-validation
+results = []
+names = []
+
+for name, model in models:
+    kfold = KFold(n_splits=10, shuffle=True, random_state=42)
+    cv_results = cross_val_score(model, xtrain_scaled, ytrain, cv=kfold, scoring='accuracy')
+    results.append(cv_results)
+    names.append(name)
+
+    msg = "%s: %f (%f)" % (name, cv_results.mean(), cv_results.std())
+    print(msg)
+
+```
+
+
+```{python}
+# RandomForestClassifier,  prediction and classification report and score
+
+model = RandomForestClassifier(n_estimators=20, n_jobs=-1)
+model.fit(xtrain,ytrain)
+ypred = model.predict(xtest)
+
+from sklearn.metrics import confusion_matrix
+cm = confusion_matrix(ytest, ypred)
+print(cm)
+
+from sklearn.metrics import classification_report
+print(classification_report(ytest, ypred))
+
+score = model.score(xtest, ytest)
+print(score)
+```
+
+In this matrix:
+
+True Positives (TP):
+
+TP for Class 0 (first row, first column): 3 instances were correctly predicted as Class 0.
+TP for Class 1 (second row, second column): 121 instances were correctly predicted as Class 1.
+TP for Class 2 (third row, third column): 80 instances were correctly predicted as Class 2.
+False Positives (FP):
+
+FP for Class 0 (first row, second and third columns): 0 instances of Class 0 were incorrectly predicted as Class 1, and 0 instance was incorrectly predicted as Class 2.
+FP for Class 1 (second row, first and third columns): 0 instances of Class 1 were incorrectly predicted as Class 0, and 7 instances were incorrectly predicted as Class 2.
+FP for Class 2 (third row, first and second columns): 0 instances of Class 2 were incorrectly predicted as Class 0, and 4 instance was incorrectly predicted as Class 1.
+True Negatives (TN):
+The remaining entries outside the diagonal are not explicitly mentioned in a confusion matrix, but they represent instances that were correctly predicted as classes other than the one specified by the row.
+
+False Negatives (FN):
+
+FN for Class 0 (first row, remaining columns): 1 instance of Class 0 was incorrectly predicted as either Class 1 or Class 2.
+FN for Class 1 (second row, remaining columns): 6 instances of Class 1 were incorrectly predicted as either Class 0 or Class 2.
+FN for Class 2 (third row, remaining columns): 6 instances of Class 2 were incorrectly predicted as either Class 0 or Class 1.
+
+
+
+
+```{python}
+import matplotlib.pyplot as plt
+from sklearn.metrics import roc_curve
+from sklearn.preprocessing import LabelBinarizer
+from sklearn import metrics
+from sklearn.metrics import roc_auc_score
+
+# Binarize the labels
+lb = LabelBinarizer()
+y_test_bin = lb.fit_transform(ytest)
+ypred_bin = lb.transform(ypred)
+
+# Calculate ROC curve for each class
+plt.figure(figsize=(8, 6))
+
+for i in range(len(lb.classes_)):
+    fpr, tpr, _ = roc_curve(y_test_bin[:, i], ypred_bin[:, i])
+    roc_auc_class = roc_auc_score(y_test_bin[:, i], ypred_bin[:, i])
+    plt.plot(fpr, tpr, label=f"Class '{lb.classes_[i]}' (ROC-AUC = {roc_auc_class:.2f})")
+
+# Plotting for random chance
+plt.plot([0, 1], [0, 1], linestyle='--', color='black', label='Chance', alpha=0.5)
+
+plt.xlabel('False Positive Rate')
+plt.ylabel('True Positive Rate')
+plt.title('One-Versus-Rest (OvR) ROC-AUC for each class')
+plt.legend()
+plt.grid()
+plt.show()
+```
+
+```{python}
+# 10 fold cross validation on training data
+from sklearn.model_selection import KFold, cross_val_score
+k_folds = KFold(n_splits = 10)
+
+scores = cross_val_score(model, xtrain, ytrain, cv =k_folds)
+
+print("Cross Validation Scores: ", scores)
+print("Average CV Score: ", scores.mean())
+print("Number of CV Scores used in Average: ", len(scores))
+```
+
+ Number of CV Scores used in Average:  0.93 or 93%
+ 
+ the average cross-validation score provides an estimate of the model's performance that is less sensitive to the choice of a particular training/test split, giving you a more robust evaluation metric.
+at the end If accuracy increases while the area under the ROC curve (AUC) decreases, it means that there is an improvement in correctly identifying positive samples (True Positives) and a reduction in misclassifying samples from other classes (False Positives). With increased accuracy, the model demonstrates better capability in correctly identifying positive class instances.
+However, if AUC decreases, it indicates a change in the balance between the True Positive rate and False Positive rate. The model may perform better in detecting positive samples, but it might struggle in reducing False Negatives, which could be crucial in specific applications, depending on the nature of the problem.
+In general, an increase in AUC signifies an improvement in the model's ability to differentiate between classes, while an increase in accuracy indicates an overall enhancement in the model's ability to correctly identify instances. 
+
+
+## 6-Results and Conclusions:
+
+in this data set we have a little correlation between features but by cleaning and preprocessing we tr the best feature in this data set after with visualization founding the outliers for dropping the data set , for using the model we have a integer and the data in G1.math is Discontinuous so we use the classification but the category of the data is range of 1 to zero so by correlation low between the target and the other feature is it hart to access the high accuracy and we have the 84 % and for better accuracy we drop some columns and check it again , in task 2 we have the 3 category of the grade. categorizing the data for better accuracy 93 and found the best feature for best prediction.
+## 7.References
+
+1-	https://towardsdatascience.com/beginner-guide-to-build-compare-and-evaluate-machine-learning-models-in-under-10-minutes-19a6781830de
+
+2-	https://github.com/Mesgarin/DAPJFinal/tree/main
