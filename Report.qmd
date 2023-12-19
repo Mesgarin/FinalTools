@@ -154,9 +154,6 @@ now we check the data type object for showing the frequency of top elemans in ea
 
 
 ```{python}
-
-# in this code we can select which column would you like to use in your palet 
-
 # Specify the columns you want to include in the analysis
 selected_columns = ['age', 'sex', 'cp', 'trestbps', 'chol', 'fbs', 'restecg', 'thalach','exang', 'oldpeak', 'slope', 'ca', 'thal', 'target']
 
@@ -203,7 +200,7 @@ df2['fbs'] = df2['fbs'].astype(int)
 ```{python}
 """Ordinal Encoding for fbs: 1:yes, 0:no,"""
 #using Map Function
-df2 = df.copy()
+df2 = df2.copy()
 
 # Ordinal Encoding for target: 1 for 'yes', 0 for 'no'
 ordinal_map = {'Yes': 1, 'No': 0}
@@ -223,9 +220,9 @@ df2.shape
 #Replace 'column_name' with the actual column name 
 
 # Get unique values in the column
-unique_values = df['target'].unique()
+unique_values = df2['target'].unique()
 print(unique_values)
-unique_values = df['slope'].unique()
+unique_values = df2['slope'].unique()
 # Display unique values to inspect
 print(unique_values)
 
@@ -411,7 +408,7 @@ int_df.columns
 *** slope ***
 ```{python}
 plt.figure(figsize=(5,5))
-valuetable = pd.crosstab(df['sex'],df['target']) # ,normalize='index'
+valuetable = pd.crosstab(df2['sex'],df2['target']) # ,normalize='index'
 valuetable.plot.bar(stacked=True)
 plt.title('sex / target')
 plt.xlabel('sex')
@@ -419,7 +416,7 @@ plt.ylabel('target')
 ```
 
 ```{python}
-df['sex'].value_counts()
+df2['sex'].value_counts()
 ```
 
 ,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
@@ -505,6 +502,15 @@ corr_matrix = df2.corr()
 corr_matrix['target'].sort_values(ascending = False)
 ```
 
+```{python}
+#| label: Get correlation visually
+plt.figure(figsize = (19,10))
+sns.heatmap(df2[['age', 'sex', 'cp', 'trestbps', 'chol', 'fbs', 'restecg', 'thalach',
+       'exang', 'oldpeak', 'ca', 'thal', 'slope_High', 'slope_Low',
+       'slope_Moderate', 'target']].corr(), cmap="YlGnBu",
+            annot=True)
+```
+
 #### 4.3 Hypotheses
 we check the data base on relation and the questions 
 
@@ -512,125 +518,79 @@ we check the data base on relation and the questions
 ```{python}
 
 # Summary statistics
-summary_stats = df
+summary_stats = df2
 print(summary_stats)
 
 # Visualize the distribution of the target variable (assuming binary: 0 for no heart attack, 1 for heart attack)
-sns.countplot(x='Heart Attack Risk', data=df)
-plt.title('Distribution of Heart Attacks')
+sns.countplot(x='target', data=df2)
+plt.title('Distribution of cp  for Heart Attacks')
 plt.show()
 
 # Explore the relationship between age and the presence of heart attacks
-sns.histplot(x='Smoking', hue='Heart Attack Risk', data=df, kde=True)
-plt.title('Distribution of Age for Heart Attacks')
+sns.histplot(x='cp', hue='target', data=df2, kde=True)
+plt.title('Distribution of cp for Heart Attacks')
 plt.show()
 ```
 
-***Checking the Hypotheses base on Diabetes***
+
+***Checking the Hypotheses base on cp***
 ```{python}
-# Checking the Hypotheses base on Diabetes
+# Checking the Hypotheses base on cp
 # Formulate Hypotheses
-# Hypothesis 1: There is a significant difference in the Diabetes distribution between patients with and without heart attacks.
+# Hypothesis 1: There is a significant difference in the cp distribution between patients with and without heart attacks.
 
 # Perform a t-test to test the hypothesis
-Diabetes_heart_attack = df[df['Heart Attack Risk'] == 1]['Diabetes']
-Diabetes_no_heart_attack = df[df['Heart Attack Risk'] == 0]['Diabetes']
+cp_heart_attack = df2[df2['target'] == 1]['cp']
+cp_no_heart_attack = df2[df2['target'] == 0]['cp']
 
-t_stat, p_value = ttest_ind(Diabetes_heart_attack, Diabetes_no_heart_attack)
+t_stat, p_value = ttest_ind(cp_heart_attack, cp_no_heart_attack)
 print(f"T-statistic: {t_stat}, p-value: {p_value}")
 
 # Set significance level
-alpha = 0.5
+alpha = 0.05
 
 # Check if the p-value is less than the significance level
 if p_value < alpha:
-    print("Reject the null hypothesis: There is a significant difference in the Diabetes distribution.")
+    print("Reject the null hypothesis: There is a significant difference in the cp distribution.")
 else:
-    print("Fail to reject the null hypothesis: There is no significant difference in the Diabetes distribution.")
-
-
-```
-
-***Checking the Hypotheses base on Smoking***
-```{python}
-# Checking the Hypotheses base on Smoking
-# Formulate Hypotheses
-# Hypothesis 1: There is a significant difference in the Smoking distribution between patients with and without heart attacks.
-
-# Perform a t-test to test the hypothesis
-Smoking_heart_attack = df[df['Heart Attack Risk'] == 1]['Smoking']
-Smoking_no_heart_attack = df[df['Heart Attack Risk'] == 0]['Smoking']
-
-t_stat, p_value = ttest_ind(Smoking_heart_attack, Smoking_no_heart_attack)
-print(f"T-statistic: {t_stat}, p-value: {p_value}")
-
-# Set significance level
-alpha = 0.5
-
-# Check if the p-value is less than the significance level
-if p_value < alpha:
-    print("Reject the null hypothesis: There is a significant difference in the Smoking distribution.")
-else:
-    print("Fail to reject the null hypothesis: There is no significant difference in the Smoking distribution.")
-
-
-```
-
-***Checking the Hypotheses base on Cholesterol***
-```{python}
-# Checking the Hypotheses base on Cholesterol
-# Formulate Hypotheses
-# Hypothesis 1: There is a significant difference in the Cholesterol distribution between patients with and without heart attacks.
-
-# Perform a t-test to test the hypothesis
-Cholesterol_heart_attack = df[df['Heart Attack Risk'] == 1]['Cholesterol']
-Cholesterol_no_heart_attack = df[df['Heart Attack Risk'] == 0]['Cholesterol']
-
-t_stat, p_value = ttest_ind(Cholesterol_heart_attack, Cholesterol_no_heart_attack)
-print(f"T-statistic: {t_stat}, p-value: {p_value}")
-
-# Set significance level
-alpha = 0.5
-
-# Check if the p-value is less than the significance level
-if p_value < alpha:
-    print("Reject the null hypothesis: There is a significant difference in the Cholesterol distribution.")
-else:
-    print("Fail to reject the null hypothesis: There is no significant difference in the Cholesterol distribution.")
+    print("Fail to reject the null hypothesis: There is no significant difference in the cp distribution.")
 
 
 ```
 
 
-***Checking the Hypotheses base on Age***
+***Checking the Hypotheses base on oldpeak***
 ```{python}
-# Checking the Hypotheses base on Smoking
+# Checking the Hypotheses base on oldpeak
 # Formulate Hypotheses
-# Hypothesis 1: There is a significant difference in the Age distribution between patients with and without heart attacks.
+# Hypothesis 1: There is a significant difference in the oldpeak distribution between patients with and without heart attacks.
 
 # Perform a t-test to test the hypothesis
-Age_heart_attack = df[df['Heart Attack Risk'] == 1]['Age']
-Age_no_heart_attack = df[df['Heart Attack Risk'] == 0]['Age']
+oldpeak_heart_attack = df2[df2['target'] == 1]['oldpeak']
+oldpeak_no_heart_attack = df2[df2['target'] == 0]['oldpeak']
 
-t_stat, p_value = ttest_ind(Age_heart_attack, Age_no_heart_attack)
+t_stat, p_value = ttest_ind(oldpeak_heart_attack, oldpeak_no_heart_attack)
 print(f"T-statistic: {t_stat}, p-value: {p_value}")
 
 # Set significance level
-alpha = 0.5
+alpha = 0.05
 
 # Check if the p-value is less than the significance level
 if p_value < alpha:
-    print("Reject the null hypothesis: There is a significant difference in the Age distribution.")
+    print("Reject the null hypothesis: There is a significant difference in the oldpeak distribution.")
 else:
-    print("Fail to reject the null hypothesis: There is no significant difference in the Age distribution.")
+    print("Fail to reject the null hypothesis: There is no significant difference in the oldpeak distribution.")
+
 
 ```
+
+
 
 ## 5. Data Analysis (Visualization and checking the distribution of each variable)
 ### 5.1 Data Modeling
 ```{python}
-df['Heart Attack Risk'].unique()
-df['Heart Attack Risk'].value_counts()
+df['target'].unique()
+df['target'].value_counts()
 ```
 
 Now that the data is clean and the values of our target variable is balanced (0:5624, 1:3139), it is time to choose our classifier. A summary of each algorithm is described below.
@@ -642,16 +602,15 @@ Random Forest is a collection (a.k.a. ensemble) of many decision trees. A decisi
 At the first step of modeling, I decided to select 22 independent variables to put in the model. The variables are as follows:
 
 ```{python}
-X = df[['Age', 'Cholesterol', 'Heart Rate',
-        'Diabetes', 'Family History', 'Smoking', 'Obesity',
-        'Alcohol Consumption', 'Exercise Hours Per Week', 'Diet',
-        'Previous Heart Problems', 'Medication Use', 'Stress Level',
-        'Sedentary Hours Per Day', 'BMI', 'Triglycerides',
-        'Physical Activity Days Per Week', 'Sleep Hours Per Day',
-         'BP_Systolic', 'BP_Diastolic','Sex_Female',
-         'Sex_Male']]
+df2.columns
+```
+
+```{python}
+X = df2[['age', 'sex', 'cp', 'trestbps', 'chol', 'fbs', 'restecg', 'thalach',
+       'exang', 'oldpeak', 'ca', 'thal', 'slope_High', 'slope_Low',
+       'slope_Moderate']]
         
-y=df['Heart Attack Risk'].values
+y=df2['target'].values
 ```
 
 ```{python}
@@ -682,8 +641,8 @@ import pandas as pd
 
 
 # Selecting features and target variable
-x = df.drop(['Heart Attack Risk' ], axis=1)
-y = df['Heart Attack Risk']
+x = df2.drop(['target' ], axis=1)
+y = df2['target']
 
 # Splitting the data into training and testing sets
 xtrain, xtest, ytrain, ytest = train_test_split(x, y, test_size=0.2, random_state=42)
@@ -722,12 +681,12 @@ To get the better result we should be surveyed precisely. Our target variable ha
 
 
 
-***RFC with Diabetes,Cholesterol,BP_Systolic,'Exercise Hours Per Week'...*** 
+***RFC with cp and oldpeak...*** 
 
 ```{python}
-# RandomForestC lassifier without removing Diabetes,Cholesterol,BP_Systolic,'Exercise Hours Per Week'  prediction and classification report and score
-x = df.drop(['Heart Attack Risk' ], axis=1)
-y = df['Heart Attack Risk']
+# RandomForestClassifier without removing cp and oldpeak  prediction and classification report and score
+x = df2.drop(['target' ], axis=1)
+y = df2['target']
 
 xtrain, xtest, ytrain, ytest = train_test_split(x, y, test_size=0.2, random_state=42)
 
@@ -773,11 +732,11 @@ auc
 
 To check this more precisely, I removed Diabetes, Chlostrol,BP_Systolic,'Exercise Hours Per Week'  from my feature variables and performed a Random Forest Classifier model. I split my data set into train (80% of the observation) and test (20% of the observation), fitted the model on train data and performed a prediction on my test data. The classification report is as follows; the accuracy reduced into 62%.
 
-*** RFC without  'Cholesterol','Heart Attack Risk','Diabetes','BP_Systolic'*** 
+*** RFC without  cp , oldpeak*** 
 ```{python}
-# RandomForestClassifier with removing Diabetes, prediction and classification report and score
-x = df.drop(['Cholesterol','Heart Attack Risk','Diabetes','BP_Systolic','Exercise Hours Per Week' ],axis=1)
-y = df['Heart Attack Risk']
+# RandomForestClassifier with removing cp , oldpeak
+x = df2.drop(['cp','oldpeak'],axis=1)
+y = df2['target']
 
 xtrain, xtest, ytrain, ytest = train_test_split(x, y, test_size=0.2, random_state=42)
 
@@ -816,17 +775,17 @@ auc
 ```
 
 ```{python}
-df.info()
+df2.info()
 ```
 
 ***Choosing the model using 10-fold Cross validation, based on the accuracy metric*** 
 
- 10 fold cross validation of classification models with removing Diabetes
+ 10 fold cross validation of classification models with removing cp
 
 ```{python}
     # Selecting features and target variable
-x = df.drop(['Cholesterol','Diabetes','BP_Systolic','Exercise Hours Per Week','Heart Attack Risk', ], axis=1)
-y = df['Heart Attack Risk']
+x = df2.drop(['cp','oldpeak' ], axis=1)
+y = df2['target']
 
 # Splitting the data into training and testing sets
 xtrain, xtest, ytrain, ytest = train_test_split(x, y, test_size=0.2, random_state=42)
@@ -870,120 +829,15 @@ Decision Tree Classifier has a lower mean accuracy and relatively low variabilit
 **Dropping columns and fitting the model**
 ```{python}
 # LogisticRegression model without 'Cholesterol','Heart Attack Risk','Diabetes','BP_Systolic',
-x = df.drop(['Cholesterol','Heart Attack Risk','Diabetes','BP_Systolic','Heart Attack Risk', ], axis=1)
-y = df['Heart Attack Risk']
+x = df2.drop(['Cholesterol','Heart Attack Risk','Diabetes','BP_Systolic','Heart Attack Risk', ], axis=1)
+y = df2['target']
 xtrain, xtest, ytrain, ytest = train_test_split(x, y, test_size=0.2, random_state=42)
 #model = LogisticRegression(solver= 'lbfgs', penalty='l2', C= 0.3, n_jobs=-1) # C: inverse of regularization, smaller value, stronger regularization
 model = KNeighborsClassifier(solver= 'lbfgs', penalty='l2', C= 0.3, n_jobs=-1)
 model.fit(xtrain , ytrain)
 ```
 
-<!-- LDA
-```{python}
-from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
-from sklearn.model_selection import train_test_split
-from sklearn.metrics import accuracy_score
 
-# Assuming 'df' is your DataFrame with the features and target variable
-# Also assuming that 'df' includes the columns 'Cholesterol', 'Diabetes', 'BP_Systolic'
-
-# Extract features and target variable
-x = df.drop(['Cholesterol', 'Diabetes', 'BP_Systolic', 'Heart Attack Risk'], axis=1)
-y = df['Heart Attack Risk']
-
-# Split the data into training and testing sets
-xtrain, xtest, ytrain, ytest = train_test_split(x, y, test_size=0.2, random_state=42)
-
-# Initialize the LDA model
-lda = LinearDiscriminantAnalysis()
-
-# Fit the LDA model to the training data
-lda.fit(xtrain, ytrain)
-
-# Make predictions on the test data
-y_pred = lda.predict(xtest)
-
-# Evaluate the accuracy of the model
-accuracy = accuracy_score(ytest, y_pred)
-print(f"Accuracy: {accuracy:.2f}")
-
-```
-
--->
-
-```{python}
-# 10 fold cross validation on training data
-from sklearn.model_selection import KFold, cross_val_score
-k_folds = KFold(n_splits = 10)
-
-scores = cross_val_score(model, xtrain, ytrain, cv =k_folds)
-
-print("Cross Validation Scores: ", scores)
-print("Average CV Score: ", scores.mean())
-print("Number of CV Scores used in Average: ", len(scores))
-```
-
-The confusion matrix depicts that the number of actual False values that the model truly predicted False as (TP) is 1125, the number of actual False values that the model wrongly predicted as True (FN) is 0, the number of actual True values that the model truly predicted as True (TN) is 0 and the number of actual True values that the model wrongly predicted as False (FP) is 628.
-
-```{python}
-# LogisticRegression model prediction and classification report and score
-ypred = model.predict(xtest)
-cm = confusion_matrix(ytest, ypred)
-print(cm)
-print(classification_report(ytest, ypred))
-score = model.score(xtest, ytest)
-print(score)
-```
-
-
-```{python}
-# LogisticRegression model ROC-AUC
-auc = roc_auc_score(ytest, ypred)
-auc
-from sklearn.metrics import roc_curve
-fpr, tpr, thresholds = roc_curve(ytest, ypred)
-fpr
-tpr
-thresholds
-plt.plot([0, 1], [0, 1], linestyle='--')
-plt.plot(fpr, tpr, marker='.')
-plt.title('ROC-AUC')
-plt.xlabel('False Positive Rate')
-plt.ylabel('True Positive Rate')
-```
-
-
-```{python}
-# LogisticRegression model auc score
-auc = roc_auc_score(ytest, model.predict(xtest))
-auc
-```
-
-#### 6.2	Improving the model
-Regarding the classification metrics, the model is performing very well. But let’s see if the performance can be improved or not.
-In the model hyperparameters, I tuned the penalty =l2. l2 regularization adds an l2 penalty equal to the square of the magnitude of coefficients. By using l2, all coefficients are shrunk, but none are eliminated. This is the method which is used in Ridge regression. So, I removed the features with small coefficient to check the performance of the model. The table of model coefficient is as follows:
-
-
-```{python}
-
-# Selecting features and target variable
-x = df.drop(['Heart Attack Risk',], axis=1)
-y = df['Heart Attack Risk']
-
-# Creating and fitting the Logistic Regression model
-model = LogisticRegression(n_jobs=-1)
-model.fit(x, y)
-
-# Creating a DataFrame with coefficients
-coefficients = pd.DataFrame({'Dependent Variable': x.columns, 'Coefficient': np.transpose(model.coef_[0])})
-
-# Adding the Intercept term
-intercept_row = pd.DataFrame({'Dependent Variable': 'Intercept', 'Coefficient': model.intercept_}, index=[len(coefficients)])
-coefficients = pd.concat([coefficients, intercept_row])
-
-print(coefficients)
-
-```
 
 
 By looking at the coefficients of the model, I keep below model and check the model performance with new features.(greater)
@@ -994,18 +848,17 @@ By looking at the coefficients of the model, I keep below model and check the mo
 
 
 ```{python}
-print(df.columns)
+print(df2.columns)
 ```
 
 **Testing the model by reducing the number of features regarding their coefficient in the first model.** 
 ```{python}
 # improved LogisticRegression model, classification report and score
-x = df.drop([ 
-        'Obesity', 'Alcohol Consumption',
-              'Sedentary Hours Per Day' ,
-       'Heart Attack Risk',  'BP_Diastolic',
+x = df2.drop([ 
+        'age', 'sex','slope_High', 'slope_Low',
+       'slope_Moderate'
        ], axis=1)
-y = df['Heart Attack Risk']
+y = df2['target']
 
 xtrain, xtest, ytrain, ytest = train_test_split(x, y, test_size=0.2, random_state=42)
 
@@ -1067,11 +920,8 @@ print(coefficients)
 ```{python}
 # 10 fold cross validation of classification models after improvment
 
-x = df.drop([ 'Diabetes',
-        'Obesity', 'Alcohol Consumption',
-       'Exercise Hours Per Week', 'Diet',
-             'Heart Attack Risk', 'BP_Systolic', 'BP_Diastolic', ], axis=1)
-y = df['Heart Attack Risk']
+x = df2.drop([ 'cp','oldpeak', ], axis=1)
+y = df2['target']
 
 # Splitting the data into training and testing sets
 xtrain, xtest, ytrain, ytest = train_test_split(x, y, test_size=0.2, random_state=42)
